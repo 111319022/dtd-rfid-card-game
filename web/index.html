@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<title>RFID Card Game</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #1a1d24;
+    --accent: #4cc9f0;
+    --accent2: #f9c74f;
+    --text: #e6e6e6;
+    --muted: #8a8f99;
+    --ok: #5ee08a;
+    --purple: #9b5de5;
+    --border: #2c313b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+  .logo { font-size: 48px; margin-bottom: 8px; }
+  h1 { margin: 0 0 4px; font-size: 24px; font-weight: 700; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 40px; }
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 640px;
+    width: 100%;
+  }
+  @media (max-width: 540px) { .cards { grid-template-columns: 1fr; } }
+  a.card {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  a.card:active { transform: translateY(0); }
+  .card-icon { font-size: 32px; margin-bottom: 12px; }
+  .card-title { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .card-tag {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #08121a;
+    align-self: flex-start;
+  }
+  .card-tag.purple { background: var(--purple); color: #fff; }
+  .note {
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .note a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="logo">🎴</div>
+<h1>RFID Card Game</h1>
+<p class="sub">Web Serial 管理介面 — 選擇功能進入</p>
+
+<div class="cards">
+  <a class="card" href="reader.html">
+    <div class="card-icon">📡</div>
+    <div class="card-title">卡片讀取器</div>
+    <div class="card-desc">感應 RFID 卡片，即時顯示卡牌資訊。適合遊戲進行時使用。</div>
+    <span class="card-tag">reader.html</span>
+  </a>
+  <a class="card" href="manager.html">
+    <div class="card-icon">✏️</div>
+    <div class="card-title">卡牌管理工具</div>
+    <div class="card-desc">讀取、編輯、寫入卡片資料。支援角色卡、技能卡、剪刀石頭布卡。</div>
+    <span class="card-tag purple">manager.html</span>
+  </a>
+</div>
+
+<p class="note">需要 Chrome / Edge（Web Serial API）．ESP32 需執行 <a href="#">card_server.py</a></p>
+</body>
+</html>

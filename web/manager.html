@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<title>卡牌管理工具 — RFID Card Game</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #1a1d24; --panel2: #232732;
+    --accent: #4cc9f0; --accent2: #f9c74f;
+    --text: #e6e6e6; --muted: #8a8f99;
+    --ok: #5ee08a; --err: #ff6b6b; --border: #2c313b;
+    --purple: #9b5de5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 24px;
+  }
+  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .back { font-size: 13px; color: var(--muted); text-decoration: none; margin-right: 4px; }
+  .back:hover { color: var(--text); }
+  h1 { margin: 0; font-size: 18px; flex: 1; }
+  button {
+    background: var(--accent); color: #08121a;
+    border: none; padding: 9px 16px; border-radius: 6px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  button.danger { background: var(--err); color: #fff; }
+
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .start-uid { font-size: 13px; color: var(--muted); margin-left: 6px; }
+  .start-uid .uid-text { font-family: monospace; font-size: 12px; margin-left: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .dot.connected { background: var(--ok); }
+  .dot.error { background: var(--err); }
+  .dot.waiting { background: var(--accent2); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  .layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .panel { background: var(--panel); border-radius: 8px; padding: 16px; }
+  h2 { margin: 0 0 12px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* 模式指示列 */
+  .mode-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 6px; margin-bottom: 12px;
+    background: var(--panel2); font-size: 13px;
+  }
+  .mode-bar.new-mode { border-left: 3px solid var(--accent); }
+  .mode-bar.edit-mode { border-left: 3px solid var(--purple); }
+  .mode-label { flex: 1; }
+  .mode-label .tag {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-size: 11px; font-weight: 600; margin-right: 6px;
+    background: var(--accent); color: #08121a;
+  }
+  .mode-label .tag.edit { background: var(--purple); color: #fff; }
+  .mode-label .uid-text { font-family: monospace; font-size: 11px; color: var(--muted); }
+
+  /* 表單 */
+  .form-row { display: grid; grid-template-columns: 116px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .form-row label { color: var(--muted); font-size: 13px; }
+  input[type=text], input[type=number], select {
+    background: var(--panel2); color: var(--text);
+    border: 1px solid var(--border); padding: 7px 10px;
+    border-radius: 5px; font-size: 13px; font-family: inherit; width: 100%;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-grid .form-row { grid-template-columns: 1fr; gap: 3px; margin-bottom: 0; }
+  .stat-grid .form-row label { font-size: 12px; }
+  .type-fields { display: none; }
+  .type-fields.active { display: block; }
+  .btn-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+  /* 覆寫確認區塊 */
+  .confirm-panel {
+    background: #1f1510; border: 1px solid #5a3010;
+    border-radius: 6px; padding: 12px 14px; margin-top: 12px;
+  }
+  .confirm-panel h3 {
+    margin: 0 0 8px; font-size: 13px; color: var(--accent2);
+  }
+  .confirm-card {
+    background: var(--panel2); border-radius: 4px;
+    padding: 8px 10px; margin-bottom: 10px; font-size: 12px;
+  }
+  .confirm-card .cname { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+  .confirm-card .cuid { font-family: monospace; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+
+  /* 提示 */
+  .hint {
+    font-size: 12px; color: var(--muted);
+    margin-top: 10px; padding: 8px 10px;
+    background: var(--panel2); border-radius: 5px;
+    border-left: 3px solid var(--accent2); line-height: 1.5;
+  }
+  .hint.ok  { border-left-color: var(--ok); color: var(--text); }
+  .hint.err { border-left-color: var(--err); color: var(--err); }
+  .hint.waiting { border-left-color: var(--accent2); color: var(--text); }
+
+  /* 歷史卡片 */
+  .card {
+    background: var(--panel2); border-left: 3px solid var(--accent);
+    padding: 10px 12px; border-radius: 4px; margin-bottom: 8px;
+    cursor: pointer; transition: background 0.1s;
+  }
+  .card:hover { background: #2a2f3b; }
+  .card.skill { border-left-color: var(--purple); }
+  .card.rps   { border-left-color: var(--accent2); }
+  .card.unknown { border-left-color: var(--err); }
+  .card .cname { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .card .cuid  { font-size: 10px; color: var(--muted); font-family: monospace; margin-bottom: 5px; }
+  .stats { display: flex; gap: 8px; font-size: 12px; flex-wrap: wrap; }
+  .stat { color: var(--muted); } .stat b { color: var(--text); }
+  .badge {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-size: 10px; font-weight: 600; margin-left: 6px;
+    background: var(--accent); color: #08121a;
+  }
+  .badge.skill { background: var(--purple); color: #fff; }
+  .badge.rps   { background: var(--accent2); }
+  .badge.unknown { background: var(--err); color: #fff; }
+
+  .log {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px; max-height: 180px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .log .line { margin-bottom: 2px; color: var(--muted); }
+  .log .line.json { color: var(--accent); }
+  .log .line.err  { color: var(--err); }
+  .log .line.ok   { color: var(--ok); }
+  .empty { color: var(--muted); font-size: 13px; }
+  .clear-btn { float: right; font-size: 11px; cursor: pointer; color: var(--muted); background: none; border: none; padding: 0; }
+  .clear-btn:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="index.html">← 返回</a>
+  <h1>✏️ 卡牌管理工具</h1>
+  <button id="connectBtn">連接 ESP32</button>
+  <button id="disconnectBtn" class="secondary" disabled>中斷</button>
+  <div class="start-uid">啟動卡：<span id="startUid" class="uid-text">—</span></div>
+  <span class="status"><span class="dot" id="statusDot"></span><span id="statusText">未連接</span></span>
+</div>
+
+<div class="layout">
+  <!-- 左：表單 + Log -->
+  <div class="col">
+    <div class="panel">
+
+      <!-- 模式指示列 -->
+      <div class="mode-bar new-mode" id="modeBar">
+        <span class="mode-label" id="modeLabel">
+          <span class="tag">新卡片</span>填寫資料後按下方按鈕
+        </span>
+        <button class="secondary" id="newCardBtn" style="display:none">切換為新卡片</button>
+      </div>
+
+      <h2>卡片資料</h2>
+
+      <div class="form-row">
+        <label>類型</label>
+        <select id="cardType">
+          <option value="CHARACTER">角色卡 CHARACTER</option>
+          <option value="SKILL">技能卡 SKILL</option>
+          <option value="RPS">剪刀石頭布 RPS</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>名稱</label>
+        <input type="text" id="cardName" maxlength="16" placeholder="最多 16 bytes" />
+      </div>
+
+      <!-- CHARACTER -->
+      <div class="type-fields active" data-type="CHARACTER">
+        <div class="stat-grid">
+          <div class="form-row"><label>HP (1–999)</label><input type="number" id="hp" min="1" max="999" value="100" /></div>
+          <div class="form-row"><label>✌️ 剪刀攻擊力</label><input type="number" id="atk_scissors" min="0" max="255" value="10" /></div>
+          <div class="form-row"><label>✊ 石頭攻擊力</label><input type="number" id="atk_rock" min="0" max="255" value="10" /></div>
+          <div class="form-row"><label>✋ 布攻擊力</label><input type="number" id="atk_paper" min="0" max="255" value="10" /></div>
+        </div>
+      </div>
+
+      <!-- SKILL -->
+      <div class="type-fields" data-type="SKILL">
+        <div class="stat-grid">
+          <div class="form-row"><label>回血量 (0–255)</label><input type="number" id="hp_heal" min="0" max="255" value="0" /></div>
+          <div class="form-row"><label>✌️ 剪刀倍數</label><input type="number" id="mul_scissors" step="0.1" min="0.1" max="25.5" value="1.0" /></div>
+          <div class="form-row"><label>✊ 石頭倍數</label><input type="number" id="mul_rock" step="0.1" min="0.1" max="25.5" value="1.0" /></div>
+          <div class="form-row"><label>✋ 布倍數</label><input type="number" id="mul_paper" step="0.1" min="0.1" max="25.5" value="1.0" /></div>
+        </div>
+      </div>
+
+      <!-- RPS -->
+      <div class="type-fields" data-type="RPS">
+        <div class="form-row">
+          <label>出招</label>
+          <select id="rps">
+            <option value="scissors">✌️ 剪刀</option>
+            <option value="rock">✊ 石頭</option>
+            <option value="paper">✋ 布</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="writeBtn" disabled id="writeBtn">寫入新卡片</button>
+        <button id="cancelBtn" class="secondary" disabled>取消</button>
+        <button id="resetBtn" class="secondary">清空表單</button>
+      </div>
+
+      <!-- 覆寫確認區塊（card_exists 時顯示） -->
+      <div class="confirm-panel" id="confirmPanel" style="display:none">
+        <h3>⚠️ 此卡已有資料，確定要覆寫嗎？</h3>
+        <div class="confirm-card" id="confirmCardInfo"></div>
+        <div class="btn-row" style="margin-top:0">
+          <button id="confirmOverwriteBtn" class="danger">確認覆寫</button>
+          <button id="confirmCancelBtn" class="secondary">取消</button>
+        </div>
+      </div>
+
+      <div class="hint" id="hint">提示：先連接 ESP32。感應到的卡片會出現在右欄，點選可載入表單。</div>
+    </div>
+
+    <div class="panel">
+      <h2>序列 Log <button class="clear-btn" id="clearLog">清除</button></h2>
+      <div class="log" id="log"><div class="empty">等待裝置輸出...</div></div>
+    </div>
+  </div>
+
+  <!-- 右：歷史卡片 -->
+  <div class="panel">
+    <h2>讀取歷史（點選載入表單）<button class="clear-btn" id="clearCards">清除</button></h2>
+    <div id="cards"><div class="empty">尚未讀取任何卡片</div></div>
+  </div>
+</div>
+
+<script type="module">
+import { SerialConnection, escapeHtml, badgeFor, statsHtml } from './serial.js';
+
+const $ = id => document.getElementById(id);
+const cardsEl = $('cards'), logEl = $('log'), hintEl = $('hint');
+const connectBtn = $('connectBtn'), disconnectBtn = $('disconnectBtn');
+const writeBtn = $('writeBtn'), cancelBtn = $('cancelBtn'), resetBtn = $('resetBtn');
+const newCardBtn = $('newCardBtn');
+const statusDot = $('statusDot'), statusText = $('statusText');
+const startUidEl = $('startUid');
+const typeSel = $('cardType');
+const modeBar = $('modeBar'), modeLabel = $('modeLabel');
+const confirmPanel = $('confirmPanel'), confirmCardInfo = $('confirmCardInfo');
+const confirmOverwriteBtn = $('confirmOverwriteBtn'), confirmCancelBtn = $('confirmCancelBtn');
+
+// editMode = null (新卡片) | Card object (編輯模式)
+let editMode = null;
+// 等待用戶確認覆寫時，儲存要送出的 payload
+let pendingOverwritePayload = null;
+
+// ─── 狀態 ─────────────────────────────────────────────────────
+function setStatus(text, state) {
+  statusText.textContent = text;
+  statusDot.className = 'dot' + (state ? ' ' + state : '');
+}
+function setHint(text, cls = '') {
+  hintEl.textContent = text;
+  hintEl.className = 'hint' + (cls ? ' ' + cls : '');
+}
+function logLine(text, cls = '') {
+  if (logEl.querySelector('.empty')) logEl.innerHTML = '';
+  const d = document.createElement('div');
+  d.className = 'line ' + cls;
+  d.textContent = text;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ─── 模式 ─────────────────────────────────────────────────────
+function setEditMode(card) {
+  editMode = card;
+  if (card) {
+    modeBar.className = 'mode-bar edit-mode';
+    modeLabel.innerHTML = `<span class="tag edit">編輯模式</span>${escapeHtml(card.name || '(未命名)')} <span class="uid-text">${escapeHtml(card.uid || '')}</span>`;
+    newCardBtn.style.display = '';
+    writeBtn.textContent = '更新卡片';
+  } else {
+    modeBar.className = 'mode-bar new-mode';
+    modeLabel.innerHTML = `<span class="tag">新卡片</span>填寫資料後按下方按鈕`;
+    newCardBtn.style.display = 'none';
+    writeBtn.textContent = '寫入新卡片';
+  }
+  hideConfirm();
+}
+
+// ─── 確認覆寫面板 ─────────────────────────────────────────────
+function showConfirm(existingCard, payload) {
+  pendingOverwritePayload = payload;
+  confirmCardInfo.innerHTML = `
+    <div class="cname">${escapeHtml(existingCard.name || '(未命名)')} ${badgeFor(existingCard.type || 'UNKNOWN')}</div>
+    <div class="cuid">UID: ${escapeHtml(existingCard.uid || '')}</div>
+    <div class="stats">${statsHtml(existingCard)}</div>`;
+  confirmPanel.style.display = '';
+  setHint('確認是否要用目前表單資料覆寫此卡片。');
+}
+function hideConfirm() {
+  confirmPanel.style.display = 'none';
+  pendingOverwritePayload = null;
+}
+
+// ─── 類型欄位切換 ─────────────────────────────────────────────
+typeSel.addEventListener('change', () => showTypeFields(typeSel.value));
+function showTypeFields(type) {
+  document.querySelectorAll('.type-fields').forEach(el =>
+    el.classList.toggle('active', el.dataset.type === type));
+}
+
+// ─── 歷史卡片 ─────────────────────────────────────────────────
+function typeClass(type) {
+  return { SKILL: 'skill', RPS: 'rps', UNKNOWN: 'unknown' }[type] ?? '';
+}
+function renderCard(card) {
+  if (cardsEl.querySelector('.empty')) cardsEl.innerHTML = '';
+  const el = document.createElement('div');
+  el.className = 'card ' + typeClass(card.type);
+  el.innerHTML = `
+    <div class="cname">${escapeHtml(card.name || '(未命名)')} ${badgeFor(card.type || 'UNKNOWN')}</div>
+    <div class="cuid">UID: ${escapeHtml(card.uid || '')}</div>
+    <div class="stats">${statsHtml(card)}</div>`;
+  el.addEventListener('click', () => loadToForm(card));
+  cardsEl.prepend(el);
+  while (cardsEl.children.length > 15) cardsEl.removeChild(cardsEl.lastChild);
+}
+
+// ─── 表單 ────────────────────────────────────────────────────
+function loadToForm(card) {
+  if (!card.type || card.type === 'UNKNOWN') return;
+  typeSel.value = card.type;
+  showTypeFields(card.type);
+  $('cardName').value = card.name || '';
+  if (card.type === 'CHARACTER') {
+    $('hp').value = card.hp ?? 100;
+    $('atk_scissors').value = card.atk_scissors ?? 0;
+    $('atk_rock').value = card.atk_rock ?? 0;
+    $('atk_paper').value = card.atk_paper ?? 0;
+  } else if (card.type === 'SKILL') {
+    $('hp_heal').value = card.hp_heal ?? 0;
+    $('mul_scissors').value = card.mul_scissors ?? 1.0;
+    $('mul_rock').value = card.mul_rock ?? 1.0;
+    $('mul_paper').value = card.mul_paper ?? 1.0;
+  } else if (card.type === 'RPS') {
+    $('rps').value = card.rps || 'scissors';
+  }
+  setEditMode(card);
+  setHint(`已載入「${card.name || card.uid}」，修改後按「更新卡片」，再將此卡片靠近讀卡機。`);
+}
+
+function readForm() {
+  const t = typeSel.value;
+  const stats = { type: t };
+  if (t === 'CHARACTER') {
+    stats.hp = +$('hp').value;
+    stats.atk_scissors = +$('atk_scissors').value;
+    stats.atk_rock = +$('atk_rock').value;
+    stats.atk_paper = +$('atk_paper').value;
+  } else if (t === 'SKILL') {
+    stats.hp_heal = +$('hp_heal').value;
+    stats.mul_scissors = +$('mul_scissors').value;
+    stats.mul_rock = +$('mul_rock').value;
+    stats.mul_paper = +$('mul_paper').value;
+  } else if (t === 'RPS') {
+    stats.rps = $('rps').value;
+  }
+  return { name: $('cardName').value, stats };
+}
+
+// ─── Serial ──────────────────────────────────────────────────
+async function doWrite(force) {
+  hideConfirm();
+  const payload = readForm();
+  writeBtn.disabled = true;
+  cancelBtn.disabled = false;
+  try {
+    const sent = await conn.send({ cmd: 'write', force, name: payload.name, stats: payload.stats });
+    logLine('→ ' + sent, 'ok');
+    // 儲存 payload 以備確認覆寫時重送
+    pendingOverwritePayload = { name: payload.name, stats: payload.stats };
+  } catch (e) {
+    logLine('[error] ' + e.message, 'err');
+    writeBtn.disabled = false;
+    cancelBtn.disabled = true;
+  }
+}
+
+const conn = new SerialConnection({
+  onConnect() {
+    setStatus('已連接', 'connected');
+    connectBtn.disabled = true;
+    disconnectBtn.disabled = false;
+    writeBtn.disabled = false;
+    setHint('ESP32 已連接。感應卡片後點右欄可載入編輯，或直接填寫後按寫入按鈕。', 'ok');
+  },
+  onDisconnect() {
+    setStatus('未連接');
+    connectBtn.disabled = false;
+    disconnectBtn.disabled = true;
+    writeBtn.disabled = true;
+    cancelBtn.disabled = true;
+    hideConfirm();
+    startUidEl.textContent = '—';
+  },
+  onLine(text) {
+    logLine(text, text.startsWith('{') ? 'json' : '');
+  },
+  onMessage(msg) {
+    if (msg.type && !msg.event) { renderCard(msg); return; }
+    switch (msg.event) {
+      case 'ready':
+        setHint('ESP32 就緒。感應卡片可讀取，或填寫表單後按寫入按鈕。', 'ok');
+        break;
+      case 'read':
+        if (msg.start_uid) startUidEl.textContent = msg.start_uid;
+        setHint('ESP32 就緒。感應卡片可讀取，或填寫表單後按寫入按鈕。', 'ok');
+        break;
+      case 'game_started':
+        setStatus('遊戲啟動', 'connected');
+        setHint(`遊戲啟動（啟動卡 ${msg.uid || ''}）`, 'ok');
+        break;
+        break;
+        setStatus('等待感應卡片...', 'waiting');
+        setHint('請將目標卡片靠近讀卡機...', 'waiting');
+        break;
+      case 'card_exists':
+        // ESP32 發現卡片已有資料，請用戶確認
+        writeBtn.disabled = false;
+        cancelBtn.disabled = true;
+        setStatus('已連接', 'connected');
+        showConfirm(msg.card, pendingOverwritePayload);
+        break;
+      case 'write':
+        writeBtn.disabled = false;
+        cancelBtn.disabled = true;
+        hideConfirm();
+        setStatus('已連接', 'connected');
+        if (msg.ok) {
+          renderCard(msg.card);
+          setEditMode(msg.card);
+          setHint(`寫入成功：${msg.card?.name || msg.card?.uid || ''}`, 'ok');
+          logLine('✅ write OK', 'ok');
+        } else {
+          setHint(`寫入失敗：${msg.message || ''}`, 'err');
+          logLine('❌ write failed: ' + (msg.message || ''), 'err');
+        }
+        break;
+      case 'cancelled':
+        writeBtn.disabled = false;
+        cancelBtn.disabled = true;
+        hideConfirm();
+        setStatus('已連接', 'connected');
+        setHint('已取消。');
+        break;
+      case 'error':
+        logLine('[ESP32 error] ' + msg.message, 'err');
+        break;
+    }
+  },
+});
+
+// ─── 按鈕 ─────────────────────────────────────────────────────
+connectBtn.addEventListener('click', async () => {
+  try { await conn.connect(); }
+  catch (e) {
+    if (e.name !== 'NotFoundError') { setStatus('連接失敗', 'error'); logLine('[error] ' + e.message, 'err'); }
+  }
+});
+disconnectBtn.addEventListener('click', () => conn.disconnect());
+
+// 編輯模式：用戶已明確載入卡片，直接 force:true（一次感應即寫入）
+// 新卡片模式：force:false，讓 ESP32 先檢查是否已有資料
+writeBtn.addEventListener('click', () => doWrite(editMode !== null));
+
+cancelBtn.addEventListener('click', async () => {
+  hideConfirm();
+  try {
+    const sent = await conn.send({ cmd: 'cancel' });
+    logLine('→ ' + sent, 'ok');
+  } catch {}
+  writeBtn.disabled = false;
+  cancelBtn.disabled = true;
+});
+
+newCardBtn.addEventListener('click', () => {
+  setEditMode(null);
+  $('cardName').value = '';
+  $('hp').value = 100;
+  ['atk_scissors','atk_rock','atk_paper'].forEach(k => $(k).value = 10);
+  ['mul_scissors','mul_rock','mul_paper'].forEach(k => $(k).value = 1.0);
+  $('hp_heal').value = 0;
+  setHint('已切換為新卡片模式。填寫資料後按「寫入新卡片」，再感應一張空白卡。');
+});
+
+resetBtn.addEventListener('click', () => {
+  $('cardName').value = '';
+  $('hp').value = 100;
+  ['atk_scissors','atk_rock','atk_paper'].forEach(k => $(k).value = 10);
+  ['mul_scissors','mul_rock','mul_paper'].forEach(k => $(k).value = 1.0);
+  $('hp_heal').value = 0;
+  hideConfirm();
+  setHint('表單已清空。');
+});
+
+// 確認覆寫
+confirmOverwriteBtn.addEventListener('click', async () => {
+  if (!pendingOverwritePayload) return;
+  const { name, stats } = pendingOverwritePayload;
+  hideConfirm();
+  writeBtn.disabled = true;
+  cancelBtn.disabled = false;
+  try {
+    const sent = await conn.send({ cmd: 'write', force: true, name, stats });
+    logLine('→ ' + sent, 'ok');
+    setStatus('等待感應卡片...', 'waiting');
+    setHint('請再次將卡片靠近讀卡機以完成覆寫...', 'waiting');
+  } catch (e) {
+    logLine('[error] ' + e.message, 'err');
+    writeBtn.disabled = false;
+    cancelBtn.disabled = true;
+  }
+});
+confirmCancelBtn.addEventListener('click', () => {
+  hideConfirm();
+  setHint('已取消覆寫。');
+});
+
+$('clearLog').addEventListener('click', () => { logEl.innerHTML = '<div class="empty">等待裝置輸出...</div>'; });
+$('clearCards').addEventListener('click', () => { cardsEl.innerHTML = '<div class="empty">尚未讀取任何卡片</div>'; });
+</script>
+</body>
+</html>
