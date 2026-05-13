@@ -44,7 +44,7 @@
   .home-logo { font-size: 48px; margin-bottom: 8px; }
   .home-title { margin: 0 0 4px; font-size: 24px; font-weight: 700; }
   .home-sub { color: var(--muted); font-size: 14px; margin-bottom: 40px; }
-  .cards-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 640px; width: 100%; }
+  .cards-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 960px; width: 100%; }
   @media (max-width: 540px) { .cards-nav { grid-template-columns: 1fr; } }
   .card-nav { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px 24px; text-decoration: none; color: var(--text); cursor: pointer; transition: 0.15s; }
   .card-nav:hover { border-color: var(--accent); transform: translateY(-2px); }
@@ -152,3 +152,150 @@
   button.small { padding: 5px 10px; font-size: 12px; }
   button.danger { background: var(--err); color: #fff; }
   button.danger:hover { opacity: 0.85; }
+
+  /* ── Battle View（甲蟲王者風靜態）────────────────── */
+  .muted { color: var(--muted); }
+  .battle-duel {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 1180px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  @media (min-width: 960px) {
+    .battle-duel {
+      grid-template-columns: minmax(220px, 1fr) minmax(300px, 1.15fr) minmax(220px, 1fr);
+      align-items: stretch;
+    }
+  }
+  .battle-col-center { min-width: 0; display: flex; flex-direction: column; }
+  .battle-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-top: 12px;
+    padding-bottom: 16px;
+  }
+  .battle-side-label {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted);
+    margin-bottom: 10px; text-transform: uppercase;
+  }
+  .battle-portrait {
+    width: 100%;
+    max-width: 168px;
+    aspect-ratio: 4 / 5;
+    border-radius: 14px;
+    border: 3px solid var(--border);
+    background: linear-gradient(165deg, var(--panel2) 0%, #141820 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
+  }
+  .battle-portrait-inner {
+    font-size: 56px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    user-select: none;
+  }
+  .battle-p2 .battle-portrait-inner { color: var(--purple); }
+  .battle-player-name {
+    font-size: 16px; font-weight: 600; margin-bottom: 8px; word-break: break-word;
+    width: 100%; max-width: 200px;
+  }
+  .battle-hp-wrap {
+    width: 100%;
+    max-width: 220px;
+    height: 18px;
+    border-radius: 9px;
+    border: 2px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .battle-hp-text { font-size: 14px; margin-bottom: 4px; }
+  .battle-stage .battle-round {
+    font-size: 13px; color: var(--accent2); font-weight: 700; letter-spacing: 0.04em;
+    margin-bottom: 8px; min-height: 1.2em;
+  }
+  .battle-prompt {
+    font-size: 20px; font-weight: 700; line-height: 1.35; margin-bottom: 12px;
+  }
+  .battle-toast {
+    min-height: 1.4em; font-size: 13px; color: var(--err); margin-bottom: 10px;
+  }
+  .battle-actions { margin-bottom: 14px; }
+  .battle-result {
+    min-height: 2.5em;
+    font-size: 15px; line-height: 1.5; margin-bottom: 12px;
+  }
+  .battle-reveal-hint {
+    font-size: 18px; font-weight: 700; color: var(--accent2); padding: 12px 8px;
+  }
+  .battle-result-title { font-size: 20px; font-weight: 700; color: var(--accent2); margin-bottom: 8px; }
+  .battle-result-title.big { font-size: 26px; }
+  .battle-result-detail { margin: 0 0 6px; color: var(--text); }
+  .battle-rules { margin-top: 8px; margin-bottom: 0; font-size: 12px; }
+  .hp-wrap {
+    height: 12px; border-radius: 6px; background: var(--border); overflow: hidden;
+  }
+  .hp-bar {
+    height: 100%; width: 0%; border-radius: 6px;
+    background: linear-gradient(90deg, var(--ok), var(--accent));
+  }
+  .battle-p2 .hp-bar {
+    background: linear-gradient(90deg, var(--purple), var(--accent));
+  }
+  .hp-text { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .battle-side.active-turn {
+    box-shadow: 0 0 0 2px var(--accent2);
+    border-color: var(--accent2);
+  }
+
+  /* 三角猜拳盤：上石頭、左剪刀、右布 */
+  .battle-rps-cluster {
+    position: relative;
+    width: 200px;
+    height: 168px;
+    margin-top: 14px;
+    flex-shrink: 0;
+  }
+  .rps-node {
+    position: absolute;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+  }
+  .rps-glyph { font-size: 28px; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45)); }
+  .rps-rock {
+    top: 0;
+    left: calc(50% - 31px);
+    background: radial-gradient(circle at 35% 30%, #ff6b6b, #9b1c1c);
+  }
+  .rps-scissors {
+    bottom: 4px;
+    left: 4px;
+    background: radial-gradient(circle at 35% 30%, #ffe066, #b8860b);
+  }
+  .rps-paper {
+    bottom: 4px;
+    right: 4px;
+    background: radial-gradient(circle at 35% 30%, #74b9ff, #1e5799);
+  }
+  .rps-node.is-selected {
+    box-shadow: 0 0 0 4px var(--accent2), 0 0 20px rgba(249, 199, 79, 0.45);
+    z-index: 2;
+  }
+  .rps-node.is-dim {
+    opacity: 0.28;
+  }
+  .rps-node.is-pending {
+    opacity: 0.42;
+  }

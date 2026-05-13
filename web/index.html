@@ -12,6 +12,7 @@
   <div class="logo-small" onclick="switchView('home')">🎴</div>
   <button id="navHome" class="nav-btn active" onclick="switchView('home')">首頁</button>
   <button id="navReader" class="nav-btn" onclick="switchView('reader')">讀卡器</button>
+  <button id="navBattle" class="nav-btn" onclick="switchView('battle')">對戰</button>
   <button id="navManager" class="nav-btn" onclick="switchView('manager')">管理器</button>
   <button id="navSettings" class="nav-btn" onclick="switchView('settings')">設定</button>
   <div class="spacer"></div>
@@ -31,6 +32,11 @@
       <div class="card-icon">📡</div>
       <div class="card-title">卡片讀取器</div>
       <div class="card-desc">感應 RFID 卡片，即時顯示卡牌資訊。適合遊戲進行時使用 。</div>
+    </div>
+    <div class="card-nav" onclick="switchView('battle')">
+      <div class="card-icon">⚔️</div>
+      <div class="card-title">雙人對戰</div>
+      <div class="card-desc">單一讀卡區：角色卡 → 技能（可跳過）→ 出拳卡；平手 0 傷，HP 歸零即結束。感應啟動卡後進入候機室。</div>
     </div>
     <div class="card-nav" onclick="switchView('manager')">
       <div class="card-icon">✏️</div>
@@ -57,6 +63,55 @@
     <div class="panel">
       <h2>感應歷史 <button class="clear-btn" onclick="document.getElementById('history').innerHTML = '<div class=\'empty\'>尚無記錄</div>'">清除</button></h2>
       <div class="history-list" id="history"><div class="empty">尚無記錄</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================== VIEW: BATTLE ================== -->
+<div id="view-battle" class="view">
+  <div class="battle-duel">
+    <div class="panel battle-side battle-p1" id="battlePanelP1">
+      <div class="battle-side-label">P1</div>
+      <div class="battle-portrait" id="battlePortraitFrameP1">
+        <span class="battle-portrait-inner" id="battleP1Portrait">—</span>
+      </div>
+      <div class="battle-player-name" id="battleP1Name">—</div>
+      <div class="hp-wrap battle-hp-wrap"><div class="hp-bar" id="battleP1Bar"></div></div>
+      <div class="hp-text battle-hp-text" id="battleP1Hp">— / —</div>
+      <div class="battle-rps-cluster" id="battleRpsP1" aria-hidden="true">
+        <div class="rps-node rps-rock" data-move="rock"><span class="rps-glyph">✊</span></div>
+        <div class="rps-node rps-scissors" data-move="scissors"><span class="rps-glyph">✌️</span></div>
+        <div class="rps-node rps-paper" data-move="paper"><span class="rps-glyph">✋</span></div>
+      </div>
+    </div>
+
+    <div class="col battle-col-center">
+      <div class="panel battle-stage">
+        <div class="battle-round" id="battleRound"></div>
+        <div class="battle-prompt" id="battlePrompt"></div>
+        <div class="battle-toast" id="battleToast" aria-live="polite"></div>
+        <div class="btn-row battle-actions">
+          <button type="button" id="battleStartBtn">開始本場</button>
+          <button type="button" id="battleSkipSkillBtn" class="secondary" style="display:none">不使用技能</button>
+        </div>
+        <div class="battle-result" id="battleResult"></div>
+        <p class="battle-rules hint">規則：感應「啟動卡」進入候機室後按「開始本場」；每回合依序 P1 技能 → P2 技能（可跳過）→ P1 出拳 → P2 出拳。雙方出拳後先揭曉再公佈傷害。請下一位玩家換卡前稍候約 1.5 秒（讀卡防彈跳）。</p>
+      </div>
+    </div>
+
+    <div class="panel battle-side battle-p2" id="battlePanelP2">
+      <div class="battle-side-label">P2</div>
+      <div class="battle-portrait" id="battlePortraitFrameP2">
+        <span class="battle-portrait-inner" id="battleP2Portrait">—</span>
+      </div>
+      <div class="battle-player-name" id="battleP2Name">—</div>
+      <div class="hp-wrap battle-hp-wrap"><div class="hp-bar" id="battleP2Bar"></div></div>
+      <div class="hp-text battle-hp-text" id="battleP2Hp">— / —</div>
+      <div class="battle-rps-cluster" id="battleRpsP2" aria-hidden="true">
+        <div class="rps-node rps-rock" data-move="rock"><span class="rps-glyph">✊</span></div>
+        <div class="rps-node rps-scissors" data-move="scissors"><span class="rps-glyph">✌️</span></div>
+        <div class="rps-node rps-paper" data-move="paper"><span class="rps-glyph">✋</span></div>
+      </div>
     </div>
   </div>
 </div>
@@ -157,7 +212,7 @@
 
     <div class="panel">
       <h2>啟動卡設定</h2>
-      <p class="settings-desc">感應到以下 UID 的卡片時，會自動觸發「遊戲開始」並切換至讀卡器畫面。</p>
+      <p class="settings-desc">感應到以下 UID 的卡片時，會自動觸發「遊戲開始」並切換至對戰畫面（候機室）；再按「開始本場」依序感應角色卡。</p>
 
       <div id="activationList" class="activation-list"></div>
 
@@ -189,13 +244,146 @@
 
 <script type="module">
 import { SerialConnection, escapeHtml, badgeFor, statsHtml } from './serial.js';
+import { createBattleController } from './battle.js';
 
 const $ = id => document.getElementById(id);
 let currentView = 'home';
 
+let battleToastTimer = null;
+function battleToast(msg) {
+  const el = $('battleToast');
+  if (!el) return;
+  el.textContent = msg;
+  clearTimeout(battleToastTimer);
+  battleToastTimer = setTimeout(() => { el.textContent = ''; }, 2800);
+}
+
+function rpsLabel(m) {
+  return ({ scissors: '✌️ 剪刀', rock: '✊ 石頭', paper: '✋ 布' })[m] || m || '—';
+}
+
+function battlePortraitChar(name) {
+  const s = (name && String(name).trim()) || '';
+  if (!s || s === '—') return '—';
+  return s.slice(0, 1);
+}
+
+function updateRpsCluster(el, ownMove, reveal) {
+  if (!el) return;
+  el.dataset.reveal = reveal;
+  el.querySelectorAll('.rps-node').forEach(n => {
+    n.classList.remove('is-selected', 'is-dim', 'is-pending');
+    const m = n.dataset.move;
+    if (reveal === 'moves' || reveal === 'full') {
+      if (ownMove && m === ownMove) n.classList.add('is-selected');
+      else n.classList.add('is-dim');
+    } else if (reveal === 'hidden') {
+      n.classList.add('is-pending');
+    }
+  });
+}
+
+function renderBattleView(snap) {
+  const pr = $('battlePrompt');
+  const rd = $('battleRound');
+  const rs = $('battleResult');
+  const bStart = $('battleStartBtn');
+  const bSkip = $('battleSkipSkillBtn');
+  if (pr) pr.textContent = snap.prompt || '';
+  if (rd) {
+    if (snap.phase === 'lobby' || snap.phase === 'match_over') rd.textContent = '';
+    else if (snap.round > 0) rd.textContent = `第 ${snap.round} 回合`;
+    else rd.textContent = '';
+  }
+  if (bStart) bStart.style.display = snap.showStartMatch ? '' : 'none';
+  if (bSkip) {
+    bSkip.style.display = snap.showSkipSkill ? '' : 'none';
+    bSkip.textContent = snap.skipSkillLabel || '不使用技能';
+  }
+
+  const p1 = snap.p1;
+  const p2 = snap.p2;
+  const reveal = snap.rpsReveal || 'none';
+
+  const setP = (side, data) => {
+    const nameEl = $(`battle${side}Name`);
+    const hpEl = $(`battle${side}Hp`);
+    const barEl = $(`battle${side}Bar`);
+    const pan = $(`battlePanel${side}`);
+    const portraitEl = $(`battle${side}Portrait`);
+    if (!nameEl || !hpEl || !barEl) return;
+    if (!data) {
+      nameEl.textContent = '—';
+      hpEl.textContent = '— / —';
+      barEl.style.width = '0%';
+      if (portraitEl) portraitEl.textContent = '—';
+      if (pan) pan.classList.remove('active-turn');
+      return;
+    }
+    nameEl.textContent = data.name || side;
+    if (portraitEl) portraitEl.textContent = battlePortraitChar(data.name || side);
+    hpEl.textContent = `${data.hp} / ${data.maxHp}`;
+    const pct = data.maxHp > 0 ? Math.round((data.hp / data.maxHp) * 100) : 0;
+    barEl.style.width = `${pct}%`;
+    if (pan) {
+      const active =
+        (snap.phase === 'wait_p1_char' || snap.phase === 'skill_p1' || snap.phase === 'wait_p1_rps') && side === 'P1' ||
+        (snap.phase === 'wait_p2_char' || snap.phase === 'skill_p2' || snap.phase === 'wait_p2_rps') && side === 'P2';
+      pan.classList.toggle('active-turn', !!active);
+    }
+  };
+  setP('P1', p1);
+  setP('P2', p2);
+
+  const rps1 = $('battleRpsP1');
+  const rps2 = $('battleRpsP2');
+  if (rps1) updateRpsCluster(rps1, snap.p1Move, reveal);
+  if (rps2) updateRpsCluster(rps2, snap.p2Move, reveal);
+
+  if (rs) {
+    if (snap.phase === 'rps_pending_reveal') {
+      rs.innerHTML = '<div class="battle-reveal-hint">待揭曉…</div>';
+    } else if (snap.phase === 'rps_revealed') {
+      rs.innerHTML = '<div class="battle-reveal-hint">即將公佈勝負…</div>';
+    } else if (snap.phase === 'show_result' && snap.lastResult) {
+      const r = snap.lastResult;
+      let html = '';
+      if (r.winner === 'tie') {
+        html = `<div class="battle-result-title">平手</div><p class="battle-result-detail">雙方本回合 <strong>0</strong> 傷害。</p>`;
+        html += `<p class="battle-result-detail">${rpsLabel(r.p1Move)} 對 ${rpsLabel(r.p2Move)}</p>`;
+      } else {
+        const winName = r.winner === 'p1' ? (p1?.name || 'P1') : (p2?.name || 'P2');
+        const dmg = r.winner === 'p1' ? r.damageToP2 : r.damageToP1;
+        html = `<div class="battle-result-title">${escapeHtml(winName)} 勝</div>`;
+        html += `<p class="battle-result-detail">${rpsLabel(r.p1Move)} 對 ${rpsLabel(r.p2Move)}，造成 <strong>${dmg}</strong> 傷害。</p>`;
+      }
+      rs.innerHTML = html;
+    } else if (snap.phase === 'match_over' && snap.lastResult) {
+      const mw = snap.matchWinner || snap.lastResult.matchWinner;
+      let title = '對戰結束';
+      if (mw === 'p1') title = `${escapeHtml(p1?.name || 'P1')} 獲勝！`;
+      else if (mw === 'p2') title = `${escapeHtml(p2?.name || 'P2')} 獲勝！`;
+      else if (mw === 'tie') title = '雙方同歸於盡（平手）';
+      rs.innerHTML = `<div class="battle-result-title big">${title}</div><p class="battle-result-detail muted">可再感應啟動卡開新局，或按「開始本場」重新選角。</p>`;
+    } else {
+      rs.innerHTML = '';
+    }
+  }
+}
+
+const battle = createBattleController({
+  onUpdate: renderBattleView,
+  onToast: battleToast,
+});
+
 // ============== View Switching ==============
 window.switchView = function(viewId) {
-  ['home', 'reader', 'manager', 'settings'].forEach(id => {
+  if (currentView === 'battle' && viewId !== 'battle') {
+    battle.dispose();
+    battle.enterArcade();
+    gameMode = false;
+  }
+  ['home', 'reader', 'battle', 'manager', 'settings'].forEach(id => {
     const view = $(`view-${id}`); if (view) view.classList.remove('active');
     const nav = $(`nav${id.charAt(0).toUpperCase() + id.slice(1)}`); if (nav) nav.classList.remove('active');
   });
@@ -208,6 +396,7 @@ window.switchView = function(viewId) {
     if (le) le.textContent = '請先感應「啟動卡」以開始遊戲！';
   }
   if (viewId === 'settings') renderActivationList();
+  if (viewId === 'battle') renderBattleView(battle.getSnapshot());
 };
 
 // ============== Global State ==============
@@ -390,6 +579,8 @@ const conn = new SerialConnection({
   },
   onDisconnect() {
     isConnected = false; gameMode = false; scanAddMode = false;
+    battle.dispose();
+    battle.enterArcade();
     setStatus('未連接');
     connectBtn.disabled = false; disconnectBtn.disabled = true; writeBtn.disabled = true; cancelBtn.disabled = true;
     $('scanAddBtn').disabled = true;
@@ -441,11 +632,12 @@ const conn = new SerialConnection({
           if (shA) { shA.textContent = `⚠️ ${card?.uid || ''} 已是啟動卡，無需重複新增`; shA.className = 'hint'; }
           break;
         }
-        // ESP32 偵測到啟動卡 → 進入遊戲
+        // ESP32 偵測到啟動卡 → 進入遊戲（對戰候機室）
         gameMode = true;
         setStatus('遊戲進行中', 'connected');
-        if (currentView !== 'reader') window.switchView('reader');
-        latestEl.innerHTML = '<div class="empty" style="color:var(--ok)">遊戲已開始！請感應卡牌</div>';
+        window.switchView('battle');
+        battle.enterArcade();
+        latestEl.innerHTML = '<div class="empty" style="color:var(--ok)">已進入對戰候機室，請按「開始本場」。</div>';
         setHint('遊戲進行中。', 'ok');
         break;
 
@@ -467,6 +659,10 @@ const conn = new SerialConnection({
           // 靜默更新管理器歷史，但不強制切換離開設定頁
           renderManagerCard(card);
           if (currentView === 'settings') break;
+          if (currentView === 'battle') {
+            battle.onCardRead(card);
+            break;
+          }
           if (!gameMode || card.type === 'UNKNOWN') {
             if (currentView !== 'manager') window.switchView('manager');
             setHint(`偵測到卡片。請填寫表單後寫入。`, 'ok');
@@ -597,6 +793,10 @@ $('scanAddBtn').addEventListener('click', () => {
   if (sh) { sh.textContent = '請將要新增的啟動卡靠近讀卡機...'; sh.className = 'hint waiting'; }
 });
 
+$('battleStartBtn').addEventListener('click', () => { battle.startMatch(); });
+$('battleSkipSkillBtn').addEventListener('click', () => { battle.skipCurrentSkill(); });
+
+renderBattleView(battle.getSnapshot());
 
 </script>
 </body>
