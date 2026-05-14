@@ -178,7 +178,8 @@ def is_settings_card(uid_str):
 # ─── 硬體設定 ────────────────────────────────────────────────────────
 
 PIN_SCK, PIN_MOSI, PIN_MISO, PIN_RST, PIN_CS = 18, 23, 19, 22, 5
-PIN_LED = 2
+PIN_LED     = 2
+PIN_EXT_LED = 4
 
 DEBOUNCE_SEC  = 1.5
 SCAN_INTERVAL = 0.05
@@ -190,6 +191,7 @@ TYPE_MAP = {
 }
 
 led        = None
+ext_led    = None
 _stdin_buf = ""
 _poller    = select.poll()
 _poller.register(sys.stdin, select.POLLIN)
@@ -202,10 +204,14 @@ def send(obj):
     print(json.dumps(obj))
 
 
+def _set_leds(val):
+    led.value(val)
+    ext_led.value(val)
+
 def blink(times=1, on_ms=120, off_ms=120):
     for _ in range(times):
-        led.value(1); time.sleep_ms(on_ms)
-        led.value(0); time.sleep_ms(off_ms)
+        _set_leds(1); time.sleep_ms(on_ms)
+        _set_leds(0); time.sleep_ms(off_ms)
 
 
 # ─── stdin 讀取（緩衝，避免截斷）─────────────────────────────────────
@@ -400,6 +406,7 @@ def main():
     load_settings()
 
     led = Pin(PIN_LED, Pin.OUT); led.value(0)
+    ext_led = Pin(PIN_EXT_LED, Pin.OUT); ext_led.value(0)
     blink(1, 150, 0)
 
     rdr = MFRC522(PIN_SCK, PIN_MOSI, PIN_MISO, PIN_RST, PIN_CS)
@@ -473,7 +480,7 @@ def main():
             else:
                 send({"event": "read", "card": card})
 
-            led.value(1); time.sleep_ms(200); led.value(0)
+            _set_leds(1); time.sleep_ms(200); _set_leds(0)
             last_uid  = uid_str
             last_time = now
 
