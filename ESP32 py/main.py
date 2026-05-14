@@ -400,7 +400,7 @@ def uid_str_of(uid):
 # ─── 主迴圈 ──────────────────────────────────────────────────────────
 
 def main():
-    global led, pending
+    global led, ext_led, pending
 
     load_activations()
     load_settings()
