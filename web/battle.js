@@ -19,7 +19,7 @@ export const Phase = {
 const MS_REVEAL_HIDDEN = 2000;
 const MS_REVEAL_TO_DAMAGE = 1250;
 const MS_POST_RESULT = 3200;
-const MS_RESULT_TO_TURN_P1 = 700;
+const MS_RESULT_TO_TURN_P1 = 800;
 
 const RPS_ORDER = ['scissors', 'rock', 'paper'];
 
@@ -122,7 +122,7 @@ export function createBattleController({ onUpdate, onToast }) {
       skillDrawRound: isSkillDrawRound(),
       p1: p1Char
         ? {
-            name: p1Char.name || '1P',
+            name: p1Char.name || 'P1',
             hp: p1Hp,
             maxHp: p1Max,
             uid: p1Char.uid,
@@ -130,7 +130,7 @@ export function createBattleController({ onUpdate, onToast }) {
         : null,
       p2: p2Char
         ? {
-            name: p2Char.name || '2P',
+            name: p2Char.name || 'P2',
             hp: p2Hp,
             maxHp: p2Max,
             uid: p2Char.uid,
@@ -164,7 +164,7 @@ export function createBattleController({ onUpdate, onToast }) {
         return '請 2P 感應角色卡（CHARACTER）';
       case Phase.TURN_P1:
         return p1SkillBuff
-          ? '請 1P 感應「出拳卡」完成本回合'
+          ? '請 1P  感應「出拳卡」完成本回合'
           : '請 1P 出牌：可先感應一張技能卡（選用），再感應出拳卡';
       case Phase.TURN_P2:
         return p2SkillBuff
@@ -233,6 +233,8 @@ export function createBattleController({ onUpdate, onToast }) {
     const cmp = compareRps(m1, m2);
     let damageToP1 = 0;
     let damageToP2 = 0;
+    let baseAtk = 0;
+    let atkMul = 1.0;
     let winner = null;
 
     if (cmp === 0) {
@@ -241,11 +243,13 @@ export function createBattleController({ onUpdate, onToast }) {
       winner = 'p1';
       const atk = atkForCharacter(p1Char, m1);
       const mul = mulForSkill(p1SkillBuff, m1);
+      baseAtk = atk; atkMul = mul;
       damageToP2 = Math.max(0, Math.floor(atk * mul));
     } else {
       winner = 'p2';
       const atk = atkForCharacter(p2Char, m2);
       const mul = mulForSkill(p2SkillBuff, m2);
+      baseAtk = atk; atkMul = mul;
       damageToP1 = Math.max(0, Math.floor(atk * mul));
     }
 
@@ -266,6 +270,8 @@ export function createBattleController({ onUpdate, onToast }) {
       p2Move: m2,
       damageToP1,
       damageToP2,
+      baseAtk,
+      atkMul,
       p1Heal,
       p2Heal,
       matchWinner,
@@ -313,7 +319,7 @@ export function createBattleController({ onUpdate, onToast }) {
       }, MS_RESULT_TO_TURN_P1);
     } else {
       // CHARACTER / UNKNOWN：只用來「結束結算畫面」，無法套用
-      toast('此卡無法套用，已進入下一回合（請 1P 出牌）');
+      toast('此卡無法套用，已進入下一回合（請 P1 出牌）');
     }
     return true;
   }
@@ -343,7 +349,7 @@ export function createBattleController({ onUpdate, onToast }) {
     if (type === 'SKILL') {
       const alreadyUsed = isP1 ? p1SkillBuff : p2SkillBuff;
       if (alreadyUsed) {
-        toast(`${isP1 ? '1P' : '2P'} 本回合已使用過技能，請感應出拳卡。`);
+        toast(`${isP1 ? 'P1' : 'P2'} 本回合已使用過技能，請感應出拳卡。`);
         return false;
       }
       const buff = cloneSkillBuff(card);
@@ -367,7 +373,7 @@ export function createBattleController({ onUpdate, onToast }) {
       if (cardPlayer !== 0) {
         const expected = isP1 ? 1 : 2;
         if (cardPlayer !== expected) {
-          toast(`這是 ${cardPlayer}P 的出拳卡，請 ${isP1 ? '1P' : '2P'} 使用 ${expected}P 的出拳卡。`);
+          toast(`這是 P${cardPlayer} 的出拳卡，請 ${isP1 ? 'P1' : 'P2'} 使用 P${expected} 的出拳卡。`);
           return false;
         }
       }
@@ -422,7 +428,7 @@ export function createBattleController({ onUpdate, onToast }) {
         return false;
       }
       if (card.uid && p1Char?.uid && card.uid === p1Char.uid) {
-        toast('2P 請使用與 1P 不同的角色卡。');
+        toast('P2 請使用與 P1 不同的角色卡。');
         return false;
       }
       p2Char = { ...card };

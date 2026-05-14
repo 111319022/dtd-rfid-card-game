@@ -547,6 +547,12 @@ button.small { padding: 5px 10px; font-size: 9px; }
   border-radius: 4px;
   box-shadow: 0 0 14px rgba(0,0,0,0.45);
   position: relative;
+  transition: opacity 0.4s ease, filter 0.4s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+/* If the battle arena has an active-turn, dim the inactive player */
+.battle-duel:has(.battle-side.active-turn) .battle-side:not(.active-turn) {
+  opacity: 0.35;
+  filter: grayscale(60%);
 }
 .battle-side.battle-p1 { border-color: rgba(177,74,255,0.35); }
 .battle-side.battle-p2 { border-color: rgba(255,45,146,0.35); }
@@ -922,7 +928,7 @@ button.small { padding: 5px 10px; font-size: 9px; }
   letter-spacing: 0.03em;
 }
 .report-skill-effects {
-  display: flex; flex-direction: column; gap: 6px; align-items: center;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
 }
 .report-skill-effects > * { display: inline-block; white-space: nowrap; }
 .report-skill-empty {
@@ -933,14 +939,23 @@ button.small { padding: 5px 10px; font-size: 9px; }
 
 /* Summary */
 .report-summary {
-  font-family: var(--font-cjk);
-  font-size: 16px; line-height: 1.55; color: var(--text);
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
   padding-top: 6px;
 }
+.report-summary-line {
+  font-family: var(--font-cjk);
+  font-size: 16px; line-height: 1.55; color: var(--text);
+}
+.report-summary-line.heal { color: var(--neon-green); font-size: 15px; }
+.report-summary-line.hurt { color: var(--neon-red); font-size: 15px; }
 .report-summary strong {
   font-family: var(--font-pixel); font-size: 22px;
   color: var(--neon-red); margin: 0 6px;
   text-shadow: 0 0 8px var(--neon-red), 0 0 16px rgba(255,56,96,0.5);
+}
+.report-summary-line.heal strong {
+  color: var(--neon-green);
+  text-shadow: 0 0 8px var(--neon-green), 0 0 16px rgba(46,255,154,0.5);
 }
 
 /* Continue prompt */

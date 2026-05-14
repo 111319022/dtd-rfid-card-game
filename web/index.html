@@ -330,14 +330,14 @@ function formatSkillInfo(skill, activeMove = null) {
     const n = Number(v);
     if (!Number.isNaN(n) && n !== 1) {
       if (move === activeMove) {
-        parts.push(`<span class="skill-mul-active">${icon}×${n}</span>`);
+        parts.push(`<div class="skill-mul-active">${icon}×${n}</div>`);
       } else {
-        parts.push(`<span class="skill-mul-other">${icon}×${n}</span>`);
+        parts.push(`<div class="skill-mul-other">${icon}×${n}</div>`);
       }
     }
   });
-  const effect = parts.length ? parts.join(' ') : '<span class="muted">無數值加成</span>';
-  return `<div class="skill-name-label">${escapeHtml(skill.name || '(未命名)')}</div><div class="battle-skill-effect">${effect}</div>`;
+  const effect = parts.length ? parts.join('') : '<div class="muted">無數值加成</div>';
+  return `<div class="skill-name-label">${escapeHtml(skill.name || '(未命名)')}</div><div class="battle-skill-effect" style="display:flex; flex-direction:column; gap:4px; align-items:center;">${effect}</div>`;
 }
 
 function buildSkillCell(skill, activeMove) {
@@ -355,11 +355,11 @@ function buildSkillCell(skill, activeMove) {
     const n = Number(v);
     if (!Number.isNaN(n) && n !== 1) {
       const cls = move === activeMove ? 'skill-mul-active' : 'skill-mul-other';
-      parts.push(`<span class="${cls}">${icon}×${n}</span>`);
+      parts.push(`<div class="${cls}">${icon}×${n}</div>`);
     }
   });
-  const effects = parts.length ? parts.join(' ') : '<span class="muted">無數值加成</span>';
-  return `<div class="report-skill-name">${escapeHtml(skill.name || '(未命名)')}</div><div class="report-skill-effects">${effects}</div>`;
+  const effects = parts.length ? parts.join('') : '<div class="muted">無數值加成</div>';
+  return `<div class="report-skill-name">${escapeHtml(skill.name || '(未命名)')}</div><div class="report-skill-effects" style="display:flex; flex-direction:column; gap:4px; align-items:center;">${effects}</div>`;
 }
 
 function rpsCircle(move) {
@@ -422,17 +422,25 @@ function buildResultReport(snap) {
     </div>`;
 
   // 4. Summary
-  let summary = '';
+  let summaryParts = [];
   if (isOver) {
-    summary = `<div class="report-summary muted">可再感應啟動卡開新局，或按「開始本場」重新選角</div>`;
+    summaryParts.push(`<div class="report-summary-line muted">可再感應啟動卡開新局，或按「開始本場」重新選角</div>`);
   } else if (r.winner === 'tie') {
-    summary = `<div class="report-summary">本回合無人受到出拳傷害</div>`;
+    summaryParts.push(`<div class="report-summary-line">本回合無人受到出拳傷害</div>`);
   } else {
     const dmg = r.winner === 'p1' ? r.damageToP2 : r.damageToP1;
     const winName = r.winner === 'p1' ? p1Name : p2Name;
     const loseName = r.winner === 'p1' ? p2Name : p1Name;
-    summary = `<div class="report-summary">${escapeHtml(winName)} 的 ${rpsLabel(r.winner === 'p1' ? r.p1Move : r.p2Move)} 擊敗 ${escapeHtml(loseName)} 的 ${rpsLabel(r.winner === 'p1' ? r.p2Move : r.p1Move)}，造成 <strong>${dmg}</strong> 點傷害</div>`;
+    summaryParts.push(`<div class="report-summary-line">${escapeHtml(winName)} 的 ${rpsLabel(r.winner === 'p1' ? r.p1Move : r.p2Move)} 擊敗 ${escapeHtml(loseName)} 的 ${rpsLabel(r.winner === 'p1' ? r.p2Move : r.p1Move)}，造成 <strong>${dmg}</strong> 點傷害</div>`);
   }
+
+  // Add self-damage / heal events
+  if (r.p1Heal > 0) summaryParts.push(`<div class="report-summary-line heal">${escapeHtml(p1Name)} 發動技能回復 <strong>${r.p1Heal}</strong> 點生命</div>`);
+  if (r.p1Heal < 0) summaryParts.push(`<div class="report-summary-line hurt">${escapeHtml(p1Name)} 發動技能自損 <strong>${-r.p1Heal}</strong> 點生命</div>`);
+  if (r.p2Heal > 0) summaryParts.push(`<div class="report-summary-line heal">${escapeHtml(p2Name)} 發動技能回復 <strong>${r.p2Heal}</strong> 點生命</div>`);
+  if (r.p2Heal < 0) summaryParts.push(`<div class="report-summary-line hurt">${escapeHtml(p2Name)} 發動技能自損 <strong>${-r.p2Heal}</strong> 點生命</div>`);
+
+  let summary = `<div class="report-summary">${summaryParts.join('')}</div>`;
 
   // 5. Continue prompt (only on between-round result, not match over, not pending matchWinner)
   let continuePrompt = '';
@@ -482,17 +490,31 @@ function renderBattleView(snap) {
   if (sk1) sk1.innerHTML = snap.p1Skill ? formatSkillInfo(snap.p1Skill, p1ActiveMove) : (snap.p1SkillUsed ? formatSkillHidden() : '');
   if (sk2) sk2.innerHTML = snap.p2Skill ? formatSkillInfo(snap.p2Skill, p2ActiveMove) : (snap.p2SkillUsed ? formatSkillHidden() : '');
 
-  const buildDelta = (dmg, heal) => {
+  const buildDelta = (dmg, heal, atkObj = null) => {
     let html = '';
-    if (dmg > 0) html += `<div class="delta-dmg" title="受到傷害">−${dmg}</div>`;
-    if (heal > 0) html += `<div class="delta-heal" title="技能回血">+${heal}</div>`;
-    else if (heal < 0) html += `<div class="delta-dmg delta-self" title="技能自損">${heal}</div>`;
+    
+    // 受到攻擊傷害
+    if (dmg > 0) {
+      html += `<div class="delta-dmg" title="受到攻擊傷害"><span style="display:inline-block; transform:translateY(-0.1em);">-</span>${dmg}</div>`;
+      if (atkObj && atkObj.atkMul && atkObj.atkMul !== 1.0) {
+        html += `<div style="font-family: var(--font-mono); font-size: 14px; color: var(--neon-yellow); margin-top: 5px; opacity: 0.9;">💥 ${atkObj.baseAtk} × ${atkObj.atkMul} = ${dmg}</div>`;
+      }
+    }
+    
+    // 技能自損 / 回血
+    if (heal < 0) {
+       html += `<div class="delta-dmg delta-self" title="技能自損" style="${dmg > 0 ? 'margin-top: 8px;' : ''}"><span style="display:inline-block; transform:translateY(-0.1em);">-</span>${-heal}</div>`;
+       html += `<div style="font-size: 14px; color: var(--neon-red); margin-top: 2px; opacity: 0.8;">(技能自損)</div>`;
+    } else if (heal > 0) {
+       html += `<div class="delta-heal" title="技能回血" style="${dmg > 0 ? 'margin-top: 8px;' : ''}">+${heal}</div>`;
+       html += `<div style="font-size: 14px; color: var(--neon-green); margin-top: 2px; opacity: 0.8;">(技能回血)</div>`;
+    }
     return html;
   };
   const d1El = $('battleDeltaP1');
   const d2El = $('battleDeltaP2');
-  if (d1El) d1El.innerHTML = (isResultPhase && snap.lastResult) ? buildDelta(snap.lastResult.damageToP1, snap.lastResult.p1Heal) : '';
-  if (d2El) d2El.innerHTML = (isResultPhase && snap.lastResult) ? buildDelta(snap.lastResult.damageToP2, snap.lastResult.p2Heal) : '';
+  if (d1El) d1El.innerHTML = (isResultPhase && snap.lastResult) ? buildDelta(snap.lastResult.damageToP1, snap.lastResult.p1Heal, snap.lastResult.winner === 'p2' ? snap.lastResult : null) : '';
+  if (d2El) d2El.innerHTML = (isResultPhase && snap.lastResult) ? buildDelta(snap.lastResult.damageToP2, snap.lastResult.p2Heal, snap.lastResult.winner === 'p1' ? snap.lastResult : null) : '';
 
   const p1 = snap.p1;
   const p2 = snap.p2;
