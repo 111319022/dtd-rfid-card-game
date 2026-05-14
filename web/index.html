@@ -457,7 +457,10 @@ function renderBattleView(snap) {
   if (sdNotice) sdNotice.style.display = snap.skillDrawRound ? '' : 'none';
 
   const isResultPhase = snap.phase === 'show_result' || snap.phase === 'match_over';
-  if (duel) duel.dataset.resultPhase = isResultPhase ? '1' : '0';
+  if (duel) {
+    duel.dataset.resultPhase = isResultPhase ? '1' : '0';
+    duel.dataset.phase = snap.phase;
+  }
 
   if (pr) {
     // 結果階段隱藏 prompt（避免與中央戰報橫幅重複）
