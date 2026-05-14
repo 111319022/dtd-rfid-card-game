@@ -78,6 +78,7 @@
       <div class="battle-player-name" id="battleP1Name">—</div>
       <div class="hp-wrap battle-hp-wrap"><div class="hp-bar" id="battleP1Bar"></div></div>
       <div class="hp-text battle-hp-text" id="battleP1Hp">— / —</div>
+      <div class="battle-skill-info" id="battleP1Skill"></div>
       <div class="battle-rps-cluster" id="battleRpsP1" aria-hidden="true">
         <div class="rps-node rps-rock" data-move="rock"><span class="rps-glyph">✊</span></div>
         <div class="rps-node rps-scissors" data-move="scissors"><span class="rps-glyph">✌️</span></div>
@@ -92,10 +93,9 @@
         <div class="battle-toast" id="battleToast" aria-live="polite"></div>
         <div class="btn-row battle-actions">
           <button type="button" id="battleStartBtn">開始本場</button>
-          <button type="button" id="battleSkipSkillBtn" class="secondary" style="display:none">不使用技能</button>
         </div>
         <div class="battle-result" id="battleResult"></div>
-        <p class="battle-rules hint">規則：感應「啟動卡」進入候機室後按「開始本場」；每回合依序 P1 技能 → P2 技能（可跳過）→ P1 出拳 → P2 出拳。雙方出拳後先揭曉再公佈傷害。請下一位玩家換卡前稍候約 1.5 秒（讀卡防彈跳）。</p>
+        <p class="battle-rules hint">規則：感應「啟動卡」進入候機室後按「開始本場」；每回合 P1 出牌 → P2 出牌（每人可先感應 1 張技能卡，再感應 1 張出拳卡；也可直接出拳）。雙方出拳後先揭曉再公佈傷害。請下一位玩家換卡前稍候約 1.5 秒（讀卡防彈跳）。</p>
       </div>
     </div>
 
@@ -107,6 +107,7 @@
       <div class="battle-player-name" id="battleP2Name">—</div>
       <div class="hp-wrap battle-hp-wrap"><div class="hp-bar" id="battleP2Bar"></div></div>
       <div class="hp-text battle-hp-text" id="battleP2Hp">— / —</div>
+      <div class="battle-skill-info" id="battleP2Skill"></div>
       <div class="battle-rps-cluster" id="battleRpsP2" aria-hidden="true">
         <div class="rps-node rps-rock" data-move="rock"><span class="rps-glyph">✊</span></div>
         <div class="rps-node rps-scissors" data-move="scissors"><span class="rps-glyph">✌️</span></div>
@@ -283,12 +284,30 @@ function updateRpsCluster(el, ownMove, reveal) {
   });
 }
 
+function formatSkillInfo(skill) {
+  if (!skill) return '';
+  const parts = [];
+  const heal = Number(skill.hp_heal) || 0;
+  if (heal > 0) parts.push(`回血+${heal}`);
+  else if (heal < 0) parts.push(`扣血${heal}`);
+  const muls = [
+    ['✊', skill.mul_rock],
+    ['✌️', skill.mul_scissors],
+    ['✋', skill.mul_paper],
+  ];
+  muls.forEach(([icon, v]) => {
+    const n = Number(v);
+    if (!Number.isNaN(n) && n !== 1) parts.push(`${icon}×${n}`);
+  });
+  const effect = parts.length ? parts.join('　') : '無數值加成';
+  return `技能：${escapeHtml(skill.name || '(未命名)')}<br><span class="battle-skill-effect">${effect}</span>`;
+}
+
 function renderBattleView(snap) {
   const pr = $('battlePrompt');
   const rd = $('battleRound');
   const rs = $('battleResult');
   const bStart = $('battleStartBtn');
-  const bSkip = $('battleSkipSkillBtn');
   if (pr) pr.textContent = snap.prompt || '';
   if (rd) {
     if (snap.phase === 'lobby' || snap.phase === 'match_over') rd.textContent = '';
@@ -296,10 +315,11 @@ function renderBattleView(snap) {
     else rd.textContent = '';
   }
   if (bStart) bStart.style.display = snap.showStartMatch ? '' : 'none';
-  if (bSkip) {
-    bSkip.style.display = snap.showSkipSkill ? '' : 'none';
-    bSkip.textContent = snap.skipSkillLabel || '不使用技能';
-  }
+
+  const sk1 = $('battleP1Skill');
+  const sk2 = $('battleP2Skill');
+  if (sk1) sk1.innerHTML = formatSkillInfo(snap.p1Skill);
+  if (sk2) sk2.innerHTML = formatSkillInfo(snap.p2Skill);
 
   const p1 = snap.p1;
   const p2 = snap.p2;
@@ -327,8 +347,8 @@ function renderBattleView(snap) {
     barEl.style.width = `${pct}%`;
     if (pan) {
       const active =
-        (snap.phase === 'wait_p1_char' || snap.phase === 'skill_p1' || snap.phase === 'wait_p1_rps') && side === 'P1' ||
-        (snap.phase === 'wait_p2_char' || snap.phase === 'skill_p2' || snap.phase === 'wait_p2_rps') && side === 'P2';
+        (snap.phase === 'wait_p1_char' || snap.phase === 'turn_p1') && side === 'P1' ||
+        (snap.phase === 'wait_p2_char' || snap.phase === 'turn_p2') && side === 'P2';
       pan.classList.toggle('active-turn', !!active);
     }
   };
@@ -794,7 +814,6 @@ $('scanAddBtn').addEventListener('click', () => {
 });
 
 $('battleStartBtn').addEventListener('click', () => { battle.startMatch(); });
-$('battleSkipSkillBtn').addEventListener('click', () => { battle.skipCurrentSkill(); });
 
 renderBattleView(battle.getSnapshot());
 

@@ -1,17 +1,15 @@
 /**
  * 單讀卡區雙人對戰狀態機（剪刀石頭布）
  * 平手：雙方本回合不受傷害（0 傷）。
- * 多回合：一方 HP ≤ 0 時結束；每回合依序 P1 技能 → P2 技能 → P1 出拳 → P2 出拳 → 揭曉 → 結算。
+ * 多回合：一方 HP ≤ 0 時結束；每回合 P1 出牌（可技能+出拳，或只出拳）→ P2 出牌 → 揭曉 → 結算。
  */
 
 export const Phase = {
   LOBBY: 'lobby',
   WAIT_P1_CHAR: 'wait_p1_char',
   WAIT_P2_CHAR: 'wait_p2_char',
-  SKILL_P1: 'skill_p1',
-  SKILL_P2: 'skill_p2',
-  WAIT_P1_RPS: 'wait_p1_rps',
-  WAIT_P2_RPS: 'wait_p2_rps',
+  TURN_P1: 'turn_p1',
+  TURN_P2: 'turn_p2',
   RPS_PENDING_REVEAL: 'rps_pending_reveal',
   RPS_REVEALED: 'rps_revealed',
   SHOW_RESULT: 'show_result',
@@ -128,13 +126,13 @@ export function createBattleController({ onUpdate, onToast }) {
             uid: p2Char.uid,
           }
         : null,
+      p1Skill: p1SkillBuff,
+      p2Skill: p2SkillBuff,
       lastResult,
       rpsReveal: reveal,
       p1Move: showMovesToUi ? p1Move : null,
       p2Move: showMovesToUi ? p2Move : null,
       prompt: promptText(),
-      showSkipSkill: phase === Phase.SKILL_P1 || phase === Phase.SKILL_P2,
-      skipSkillLabel: phase === Phase.SKILL_P1 ? 'P1 不使用技能' : phase === Phase.SKILL_P2 ? 'P2 不使用技能' : '',
       showStartMatch: phase === Phase.LOBBY || phase === Phase.MATCH_OVER,
       matchWinner: phase === Phase.MATCH_OVER ? lastResult?.matchWinner ?? null : null,
     };
@@ -152,14 +150,14 @@ export function createBattleController({ onUpdate, onToast }) {
         return '請 P1 感應角色卡（CHARACTER）';
       case Phase.WAIT_P2_CHAR:
         return '請 P2 感應角色卡（CHARACTER）';
-      case Phase.SKILL_P1:
-        return '請 P1 感應技能卡，或按「不使用技能」';
-      case Phase.SKILL_P2:
-        return '請 P2 感應技能卡，或按「不使用技能」';
-      case Phase.WAIT_P1_RPS:
-        return '請 P1 感應出拳卡（RPS）';
-      case Phase.WAIT_P2_RPS:
-        return '請 P2 感應出拳卡（RPS）';
+      case Phase.TURN_P1:
+        return p1SkillBuff
+          ? '請 P1 感應「出拳卡」完成本回合'
+          : '請 P1 出牌：可先感應一張技能卡（選用），再感應出拳卡';
+      case Phase.TURN_P2:
+        return p2SkillBuff
+          ? '請 P2 感應「出拳卡」完成本回合'
+          : '請 P2 出牌：可先感應一張技能卡（選用），再感應出拳卡';
       case Phase.RPS_PENDING_REVEAL:
         return '雙方已出拳，揭曉中…';
       case Phase.RPS_REVEALED:
@@ -212,7 +210,7 @@ export function createBattleController({ onUpdate, onToast }) {
       return;
     }
     round += 1;
-    phase = Phase.SKILL_P1;
+    phase = Phase.TURN_P1;
     emit();
   }
 
@@ -289,6 +287,51 @@ export function createBattleController({ onUpdate, onToast }) {
     }, MS_REVEAL_HIDDEN);
   }
 
+  function handleTurnCard(card, who) {
+    const type = card?.type;
+    const isP1 = who === 'p1';
+
+    if (type === 'SKILL') {
+      const alreadyUsed = isP1 ? p1SkillBuff : p2SkillBuff;
+      if (alreadyUsed) {
+        toast(`${isP1 ? 'P1' : 'P2'} 本回合已使用過技能，請感應出拳卡。`);
+        return false;
+      }
+      const buff = cloneSkillBuff(card);
+      let heal = Number(card.hp_heal);
+      if (Number.isNaN(heal)) heal = 0;
+      if (isP1) {
+        p1SkillBuff = buff;
+        p1Hp = clampHp(p1Hp + heal, p1Max);
+      } else {
+        p2SkillBuff = buff;
+        p2Hp = clampHp(p2Hp + heal, p2Max);
+      }
+      emit();
+      return true;
+    }
+
+    if (type === 'RPS') {
+      const m = card.rps;
+      if (!m || m === 'unknown') {
+        toast('出拳卡資料異常。');
+        return false;
+      }
+      if (isP1) {
+        p1Move = m;
+        phase = Phase.TURN_P2;
+        emit();
+      } else {
+        p2Move = m;
+        startRpsRevealSequence();
+      }
+      return true;
+    }
+
+    toast('此階段請感應「技能卡」或「出拳卡」。');
+    return false;
+  }
+
   function onCardRead(card) {
     const type = card?.type;
 
@@ -326,69 +369,13 @@ export function createBattleController({ onUpdate, onToast }) {
       p2Char = { ...card };
       p2Max = p2Hp = clampHp(card.hp ?? 100, 999);
       round = 1;
-      phase = Phase.SKILL_P1;
+      phase = Phase.TURN_P1;
       emit();
       return true;
     }
 
-    if (phase === Phase.SKILL_P1) {
-      if (type !== 'SKILL') {
-        toast('此階段請感應「技能卡」，或按不使用技能。');
-        return false;
-      }
-      p1SkillBuff = cloneSkillBuff(card);
-      let heal = Number(card.hp_heal);
-      if (Number.isNaN(heal)) heal = 0;
-      p1Hp = clampHp(p1Hp + heal, p1Max);
-      phase = Phase.SKILL_P2;
-      emit();
-      return true;
-    }
-
-    if (phase === Phase.SKILL_P2) {
-      if (type !== 'SKILL') {
-        toast('此階段請感應「技能卡」，或按不使用技能。');
-        return false;
-      }
-      p2SkillBuff = cloneSkillBuff(card);
-      let heal2 = Number(card.hp_heal);
-      if (Number.isNaN(heal2)) heal2 = 0;
-      p2Hp = clampHp(p2Hp + heal2, p2Max);
-      phase = Phase.WAIT_P1_RPS;
-      emit();
-      return true;
-    }
-
-    if (phase === Phase.WAIT_P1_RPS) {
-      if (type !== 'RPS') {
-        toast('此階段請感應「出拳卡」。');
-        return false;
-      }
-      const m = card.rps;
-      if (!m || m === 'unknown') {
-        toast('出拳卡資料異常。');
-        return false;
-      }
-      p1Move = m;
-      phase = Phase.WAIT_P2_RPS;
-      emit();
-      return true;
-    }
-
-    if (phase === Phase.WAIT_P2_RPS) {
-      if (type !== 'RPS') {
-        toast('此階段請感應「出拳卡」。');
-        return false;
-      }
-      const m = card.rps;
-      if (!m || m === 'unknown') {
-        toast('出拳卡資料異常。');
-        return false;
-      }
-      p2Move = m;
-      startRpsRevealSequence();
-      return true;
-    }
+    if (phase === Phase.TURN_P1) return handleTurnCard(card, 'p1');
+    if (phase === Phase.TURN_P2) return handleTurnCard(card, 'p2');
 
     if (
       phase === Phase.RPS_PENDING_REVEAL ||
@@ -402,21 +389,6 @@ export function createBattleController({ onUpdate, onToast }) {
     return false;
   }
 
-  function skipCurrentSkill() {
-    if (phase === Phase.SKILL_P1) {
-      p1SkillBuff = null;
-      phase = Phase.SKILL_P2;
-      emit();
-      return;
-    }
-    if (phase === Phase.SKILL_P2) {
-      p2SkillBuff = null;
-      phase = Phase.WAIT_P1_RPS;
-      emit();
-      return;
-    }
-  }
-
   function dispose() {
     clearResultTimer();
   }
@@ -427,7 +399,6 @@ export function createBattleController({ onUpdate, onToast }) {
     enterArcade,
     startMatch,
     onCardRead,
-    skipCurrentSkill,
     dispose,
   };
 }

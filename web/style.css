@@ -216,6 +216,26 @@
     margin-bottom: 6px;
   }
   .battle-hp-text { font-size: 14px; margin-bottom: 4px; }
+  .battle-skill-info {
+    min-height: 1em;
+    width: 100%;
+    max-width: 220px;
+    margin-top: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--accent2);
+    text-align: center;
+    border-radius: 6px;
+  }
+  .battle-skill-info:not(:empty) {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+  }
+  .battle-skill-effect {
+    color: var(--text);
+    font-weight: 600;
+  }
   .battle-stage .battle-round {
     font-size: 13px; color: var(--accent2); font-weight: 700; letter-spacing: 0.04em;
     margin-bottom: 8px; min-height: 1.2em;
