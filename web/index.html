@@ -2,7 +2,10 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8" />
-<title>RFID Card Game</title>
+<title>DTD 大亂鬥</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=DotGothic16&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,9 +15,13 @@
   <button class="hidden-settings-btn" onclick="switchView('settings')" title="設定">⚙</button>
 
   <div class="welcome-inner">
-    <div class="welcome-logo">🎴</div>
-    <h1 class="welcome-title">RFID Card Game</h1>
-    <p class="welcome-sub">感應卡片開始遊戲</p>
+    <div class="welcome-logo">▰▰▰</div>
+    <h1 class="welcome-title">
+      <span class="title-en">DTD</span>
+      <span class="title-cjk">大亂鬥</span>
+    </h1>
+    <p class="welcome-sub">&gt; INSERT CARD TO START &lt;</p>
+    <p class="welcome-sub-cjk">感應卡片開始遊戲</p>
 
     <div class="welcome-prompts">
       <div class="welcome-prompt">
@@ -41,6 +48,8 @@
 <div id="view-battle" class="view">
   <div class="view-topbar">
     <button class="secondary" onclick="switchView('home')">← 返回首頁</button>
+    <span class="brand-mini"><span class="brand-en">DTD</span> <span class="brand-cjk">大亂鬥</span></span>
+    <span class="spacer"></span>
     <span class="status"><span class="dot" id="statusDotBattle"></span><span id="statusTextBattle">未連接</span></span>
   </div>
   <div class="battle-duel">
@@ -104,6 +113,7 @@
 <div id="view-settings" class="view">
   <div class="view-topbar">
     <button class="secondary" onclick="switchView('home')">← 返回首頁</button>
+    <span class="brand-mini"><span class="brand-en">DTD</span> <span class="brand-cjk">大亂鬥</span></span>
     <span class="status"><span class="dot" id="statusDotSettings"></span><span id="statusTextSettings">未連接</span></span>
     <span class="spacer"></span>
     <button id="connectBtn2">連接 ESP32</button>
