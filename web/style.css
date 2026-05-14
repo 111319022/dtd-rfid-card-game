@@ -314,6 +314,9 @@
   .battle-toast {
     min-height: 1.4em; font-size: 13px; color: var(--err); margin-bottom: 10px;
   }
+  .battle-toast.warn {
+    font-size: 15px; font-weight: 700; color: var(--accent2);
+  }
   .battle-actions { margin-bottom: 14px; }
   .battle-result {
     min-height: 2.5em;

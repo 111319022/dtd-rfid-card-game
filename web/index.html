@@ -20,7 +20,7 @@
       <div class="welcome-prompt">
         <div class="welcome-prompt-icon">⚔️</div>
         <div class="welcome-prompt-title">啟動卡</div>
-        <div class="welcome-prompt-desc">感應後進入對戰候機室</div>
+        <div class="welcome-prompt-desc">感應後直接開始對戰</div>
       </div>
       <div class="welcome-prompt">
         <div class="welcome-prompt-icon">⚙️</div>
@@ -255,6 +255,8 @@ let currentSettingsTab = 'uid';
 
 let battleToastTimer = null;
 function battleToast(msg) {
+  cancelRestartWarning();
+  cancelSettingsWarning();
   const el = $('battleToast');
   if (!el) return;
   el.textContent = msg;
@@ -405,6 +407,8 @@ const battle = createBattleController({
 // ============== View Switching ==============
 window.switchView = function(viewId) {
   if (currentView === 'battle' && viewId !== 'battle') {
+    cancelRestartWarning();
+    cancelSettingsWarning();
     battle.dispose();
     battle.enterArcade();
   }
@@ -433,6 +437,49 @@ let isConnected = false;
 let editMode = null;
 let pendingOverwritePayload = null;
 let scanAddMode = null;   // 'activation' | 'settings' | null
+let pendingRestart = false;
+let pendingRestartTimer = null;
+
+function showRestartWarning() {
+  cancelSettingsWarning();
+  pendingRestart = true;
+  const el = $('battleToast');
+  if (el) { el.textContent = '⚠️ 遊戲進行中！再感應一次啟動卡確認重新開始。'; el.classList.add('warn'); }
+  clearTimeout(battleToastTimer);
+  clearTimeout(pendingRestartTimer);
+  pendingRestartTimer = setTimeout(cancelRestartWarning, 8000);
+}
+
+function cancelRestartWarning() {
+  if (!pendingRestart) return;
+  pendingRestart = false;
+  clearTimeout(pendingRestartTimer);
+  pendingRestartTimer = null;
+  const el = $('battleToast');
+  if (el) { el.textContent = ''; el.classList.remove('warn'); }
+}
+
+let pendingSettings = false;
+let pendingSettingsTimer = null;
+
+function showSettingsWarning() {
+  cancelRestartWarning();
+  pendingSettings = true;
+  const el = $('battleToast');
+  if (el) { el.textContent = '⚠️ 遊戲進行中！再感應一次設定卡確認離開至設定頁。'; el.classList.add('warn'); }
+  clearTimeout(battleToastTimer);
+  clearTimeout(pendingSettingsTimer);
+  pendingSettingsTimer = setTimeout(cancelSettingsWarning, 8000);
+}
+
+function cancelSettingsWarning() {
+  if (!pendingSettings) return;
+  pendingSettings = false;
+  clearTimeout(pendingSettingsTimer);
+  pendingSettingsTimer = null;
+  const el = $('battleToast');
+  if (el) { el.textContent = ''; el.classList.remove('warn'); }
+}
 
 // ============== UID Lists (ESP32-synced) ==============
 let _webActivations = [];
@@ -613,6 +660,8 @@ const conn = new SerialConnection({
   },
   onDisconnect() {
     isConnected = false; scanAddMode = null;
+    cancelRestartWarning();
+    cancelSettingsWarning();
     battle.dispose();
     battle.enterArcade();
     setStatus('未連接');
@@ -683,16 +732,24 @@ const conn = new SerialConnection({
         if (currentView === 'battle') {
           const snap = battle.getSnapshot();
           if (snap.phase === 'lobby' || snap.phase === 'match_over') {
+            cancelRestartWarning();
             battle.startMatch();
             break;
           }
-          // 對戰進行中感應啟動卡視為誤觸，忽略
+          // 對戰進行中：第一次感應顯示警告，第二次確認後重新開始
+          if (pendingRestart) {
+            cancelRestartWarning();
+            battle.enterArcade();
+            break;
+          }
+          showRestartWarning();
           break;
         }
-        // 其他畫面 → 進入對戰候機室
+        // 其他畫面 → 直接開始對戰
         setStatus('遊戲進行中', 'connected');
         window.switchView('battle');
         battle.enterArcade();
+        battle.startMatch();
         break;
 
       case 'settings_card':
@@ -717,6 +774,20 @@ const conn = new SerialConnection({
         if (currentView === 'settings' && currentSettingsTab === 'manager') {
           setHint(`偵測到設定卡 ${card?.uid || ''}（已載入歷史,可點選編輯）`, 'ok');
           break;
+        }
+        // 對戰進行中：需確認才離開
+        if (currentView === 'battle') {
+          const snap = battle.getSnapshot();
+          if (snap.phase !== 'lobby' && snap.phase !== 'match_over') {
+            if (pendingSettings) {
+              cancelSettingsWarning();
+              setStatus('已連接', 'connected');
+              window.switchView('settings');
+              break;
+            }
+            showSettingsWarning();
+            break;
+          }
         }
         // 設定卡 → 進入設定頁
         setStatus('已連接', 'connected');
