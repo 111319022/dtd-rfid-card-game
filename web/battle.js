@@ -321,6 +321,14 @@ export function createBattleController({ onUpdate, onToast }) {
         toast('出拳卡資料異常。');
         return false;
       }
+      const cardPlayer = card.player ?? 0;
+      if (cardPlayer !== 0) {
+        const expected = isP1 ? 1 : 2;
+        if (cardPlayer !== expected) {
+          toast(`這是 P${cardPlayer} 的出拳卡，請 ${isP1 ? 'P1' : 'P2'} 使用 P${expected} 的出拳卡。`);
+          return false;
+        }
+      }
       if (isP1) {
         p1Move = m;
         phase = Phase.TURN_P2;

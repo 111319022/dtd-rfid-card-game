@@ -85,6 +85,7 @@ def encode_stats(card_type, **kw):
         buf[4] = int(round(kw.get("mul_paper", 1.0) * 10))
     elif card_type == TYPE_RPS:
         buf[1] = RPS_TO_BYTE.get(kw.get("rps", ""), 0x00)
+        buf[2] = int(kw.get("player", 0)) & 0xFF  # 0=通用, 1=P1, 2=P2
     return buf
 
 
@@ -107,7 +108,8 @@ def decode_card(name_block, stats_block, uid_str):
                 "mul_paper":    stats_block[4] / 10}
     elif t == TYPE_RPS:
         return {"type": "RPS", "uid": uid_str, "name": name,
-                "rps": BYTE_TO_RPS.get(stats_block[1], "unknown")}
+                "rps": BYTE_TO_RPS.get(stats_block[1], "unknown"),
+                "player": stats_block[2] if len(stats_block) > 2 else 0}
     else:
         return {"type": "UNKNOWN", "uid": uid_str}
 
@@ -325,7 +327,7 @@ def build_blocks(name, stats):
                           mul_rock=float(stats.get("mul_rock", 1.0)),
                           mul_paper=float(stats.get("mul_paper", 1.0)))
     elif t == TYPE_RPS:
-        sb = encode_stats(t, rps=stats.get("rps", ""))
+        sb = encode_stats(t, rps=stats.get("rps", ""), player=int(stats.get("player", 0)))
     return string_to_block(name or ""), sb
 
 

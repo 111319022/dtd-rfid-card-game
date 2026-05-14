@@ -137,7 +137,9 @@ def do_read(rdr):
 
     elif t == "RPS":
         label = {"scissors": "剪刀", "rock": "石頭", "paper": "布"}.get(card["rps"], "?")
+        player_label = {0: "通用", 1: "P1 專用", 2: "P2 專用"}.get(card.get("player", 0), "?")
         print("  出招          ：{}".format(label))
+        print("  玩家          ：{}".format(player_label))
 
     else:
         print("  ⚠ 卡片尚未寫入資料（Block 9 類型未知：0x{:02X}）".format(
@@ -182,15 +184,21 @@ def build_skill():
 
 def build_rps():
     print("\n── 剪刀石頭布卡屬性輸入 ─────")
-    name = input("  名稱（例如：剪刀 A）：")
+    name = input("  名稱（例如：剪刀P1）：")
     while True:
         rps = input("  出招 [s=剪刀 / r=石頭 / p=布]：").strip().lower()
         if rps in ("s", "r", "p"):
             break
         print("  請輸入 s / r / p")
+    while True:
+        p = input("  玩家 [1=P1 / 2=P2 / 0=通用]：").strip()
+        if p in ("0", "1", "2"):
+            player = int(p)
+            break
+        print("  請輸入 0 / 1 / 2")
     rps_map  = {"s": "scissors", "r": "rock", "p": "paper"}
     name_blk  = string_to_block(name)
-    stats_blk = encode_stats(TYPE_RPS, rps=rps_map[rps])
+    stats_blk = encode_stats(TYPE_RPS, rps=rps_map[rps], player=player)
     return name_blk, stats_blk
 
 

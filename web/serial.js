@@ -109,6 +109,9 @@ export function statsHtml(c) {
     <span class="stat">✊×<b>${c.mul_rock ?? '-'}</b></span>
     <span class="stat">✌️×<b>${c.mul_scissors ?? '-'}</b></span>
     <span class="stat">✋×<b>${c.mul_paper ?? '-'}</b></span>`;
-  if (c.type === 'RPS') return `<span class="stat">出招 <b>${escapeHtml(c.rps ?? '-')}</b></span>`;
+  if (c.type === 'RPS') {
+    const playerLabel = ({ 1: 'P1', 2: 'P2' })[c.player] ?? '通用';
+    return `<span class="stat">出招 <b>${escapeHtml(c.rps ?? '-')}</b></span><span class="stat">玩家 <b>${playerLabel}</b></span>`;
+  }
   return '';
 }

@@ -190,6 +190,14 @@
                 <option value="paper">✋ 布</option>
               </select>
             </div>
+            <div class="form-row">
+              <label>玩家</label>
+              <select id="rps_player">
+                <option value="1">P1 專用</option>
+                <option value="2">P2 專用</option>
+                <option value="0">通用（不限玩家）</option>
+              </select>
+            </div>
           </div>
 
           <div class="btn-row">
@@ -559,7 +567,7 @@ function renderManagerCard(card) {
       $('hp').value = card.hp ?? 100; $('atk_scissors').value = card.atk_scissors ?? 0; $('atk_rock').value = card.atk_rock ?? 0; $('atk_paper').value = card.atk_paper ?? 0;
     } else if (card.type === 'SKILL') {
       $('hp_heal').value = card.hp_heal ?? 0; $('mul_scissors').value = card.mul_scissors ?? 1.0; $('mul_rock').value = card.mul_rock ?? 1.0; $('mul_paper').value = card.mul_paper ?? 1.0;
-    } else if (card.type === 'RPS') { $('rps').value = card.rps || 'scissors'; }
+    } else if (card.type === 'RPS') { $('rps').value = card.rps || 'scissors'; $('rps_player').value = card.player ?? 1; }
     setEditMode(card);
     setHint(`已載入「${card.name || card.uid}」，修改後按更新。`);
   });
@@ -574,7 +582,7 @@ async function doWrite(force) {
     stats.hp = +$('hp').value; stats.atk_scissors = +$('atk_scissors').value; stats.atk_rock = +$('atk_rock').value; stats.atk_paper = +$('atk_paper').value;
   } else if (stats.type === 'SKILL') {
     stats.hp_heal = +$('hp_heal').value; stats.mul_scissors = +$('mul_scissors').value; stats.mul_rock = +$('mul_rock').value; stats.mul_paper = +$('mul_paper').value;
-  } else if (stats.type === 'RPS') { stats.rps = $('rps').value; }
+  } else if (stats.type === 'RPS') { stats.rps = $('rps').value; stats.player = +$('rps_player').value; }
   const payload = { name: $('cardName').value, stats };
 
   writeBtn.disabled = true; cancelBtn.disabled = false;
