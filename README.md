@@ -79,7 +79,10 @@
 
 ### 2. 開啟網頁
 
-直接以 Chrome 或 Edge 開啟 `web/index.html`（本機檔案即可，無需伺服器）。
+有兩種方式可以開始遊玩：
+
+- **線上直接遊玩**：以 Chrome 或 Edge 開啟 👉 [https://dtd-rfid-card-game.web.app](https://dtd-rfid-card-game.web.app)
+- **本機離線遊玩**：下載專案後，以 Chrome 或 Edge 直接開啟 `web/index.html`（無需伺服器）。
 
 ---
 
