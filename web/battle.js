@@ -265,6 +265,8 @@ export function createBattleController({ onUpdate, onToast }) {
       p2Move: m2,
       damageToP1,
       damageToP2,
+      p1Heal,
+      p2Heal,
       matchWinner,
     };
 

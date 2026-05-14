@@ -52,6 +52,7 @@
       <div class="battle-player-name" id="battleP1Name">—</div>
       <div class="hp-wrap battle-hp-wrap"><div class="hp-bar" id="battleP1Bar"></div></div>
       <div class="hp-text battle-hp-text" id="battleP1Hp">— / —</div>
+      <div class="battle-delta" id="battleDeltaP1"></div>
       <div class="battle-skill-info" id="battleP1Skill"></div>
       <div class="battle-rps-cluster" id="battleRpsP1" aria-hidden="true">
         <div class="rps-node rps-rock" data-move="rock"><span class="rps-glyph">✊</span></div>
@@ -62,14 +63,20 @@
 
     <div class="col battle-col-center">
       <div class="panel battle-stage">
-        <div class="battle-round" id="battleRound"></div>
-        <div class="battle-skill-draw-notice" id="battleSkillDraw" style="display:none">
-          <span class="battle-skill-draw-icon">🃏</span>
-          <span class="battle-skill-draw-text">雙方各多抽一張技能卡！</span>
+        <div class="battle-status-row">
+          <div class="battle-round" id="battleRound"></div>
+          <div class="battle-skill-draw-notice" id="battleSkillDraw" style="display:none">
+            <span class="battle-skill-draw-icon">🃏</span>
+            <span class="battle-skill-draw-text">雙方各多抽一張技能卡！</span>
+          </div>
         </div>
-        <div class="battle-prompt" id="battlePrompt"></div>
-        <div class="battle-toast" id="battleToast" aria-live="polite"></div>
-        <div class="battle-result" id="battleResult"></div>
+        <div class="battle-main-area">
+          <div class="battle-prompt" id="battlePrompt"></div>
+          <div class="battle-result" id="battleResult"></div>
+        </div>
+        <div class="battle-notification-zone">
+          <div class="battle-toast" id="battleToast" aria-live="polite"></div>
+        </div>
         <p class="battle-rules hint">規則：感應「啟動卡」進入候機室，再感應一次啟動卡開始本場；每回合 P1 出牌 → P2 出牌（每人可先感應 1 張技能卡，再感應 1 張出拳卡；也可直接出拳）。雙方出拳後先揭曉再公佈傷害。請下一位玩家換卡前稍候約 1.5 秒（讀卡防彈跳）。</p>
       </div>
     </div>
@@ -82,6 +89,7 @@
       <div class="battle-player-name" id="battleP2Name">—</div>
       <div class="hp-wrap battle-hp-wrap"><div class="hp-bar" id="battleP2Bar"></div></div>
       <div class="hp-text battle-hp-text" id="battleP2Hp">— / —</div>
+      <div class="battle-delta" id="battleDeltaP2"></div>
       <div class="battle-skill-info" id="battleP2Skill"></div>
       <div class="battle-rps-cluster" id="battleRpsP2" aria-hidden="true">
         <div class="rps-node rps-rock" data-move="rock"><span class="rps-glyph">✊</span></div>
@@ -294,25 +302,31 @@ function updateRpsCluster(el, ownMove, reveal) {
 }
 
 function formatSkillHidden() {
-  return `技能：<span class="battle-skill-hidden">？？？</span><br><span class="battle-skill-effect muted">已使用技能（揭曉後公開）</span>`;
+  return `<div class="skill-name-label"><span class="battle-skill-hidden">？？？</span></div><div class="battle-skill-effect muted">已使用技能（揭曉後公開）</div>`;
 }
-function formatSkillInfo(skill) {
+function formatSkillInfo(skill, activeMove = null) {
   if (!skill) return '';
   const parts = [];
   const heal = Number(skill.hp_heal) || 0;
-  if (heal > 0) parts.push(`回血+${heal}`);
-  else if (heal < 0) parts.push(`扣血${heal}`);
+  if (heal > 0) parts.push(`<span class="skill-heal-tag">回血 +${heal}</span>`);
+  else if (heal < 0) parts.push(`<span class="skill-dmg-tag">扣血 ${heal}</span>`);
   const muls = [
-    ['✊', skill.mul_rock],
-    ['✌️', skill.mul_scissors],
-    ['✋', skill.mul_paper],
+    ['✊', skill.mul_rock, 'rock'],
+    ['✌️', skill.mul_scissors, 'scissors'],
+    ['✋', skill.mul_paper, 'paper'],
   ];
-  muls.forEach(([icon, v]) => {
+  muls.forEach(([icon, v, move]) => {
     const n = Number(v);
-    if (!Number.isNaN(n) && n !== 1) parts.push(`${icon}×${n}`);
+    if (!Number.isNaN(n) && n !== 1) {
+      if (move === activeMove) {
+        parts.push(`<span class="skill-mul-active">${icon}×${n}</span>`);
+      } else {
+        parts.push(`<span class="skill-mul-other">${icon}×${n}</span>`);
+      }
+    }
   });
-  const effect = parts.length ? parts.join('　') : '無數值加成';
-  return `技能：${escapeHtml(skill.name || '(未命名)')}<br><span class="battle-skill-effect">${effect}</span>`;
+  const effect = parts.length ? parts.join(' ') : '<span class="muted">無數值加成</span>';
+  return `<div class="skill-name-label">${escapeHtml(skill.name || '(未命名)')}</div><div class="battle-skill-effect">${effect}</div>`;
 }
 
 function renderBattleView(snap) {
@@ -330,10 +344,35 @@ function renderBattleView(snap) {
   }
   if (bStart) bStart.style.display = snap.showStartMatch ? '' : 'none';
 
+  const isResultPhase = snap.phase === 'show_result' || snap.phase === 'match_over';
+  const p1ActiveMove = isResultPhase ? snap.lastResult?.p1Move : null;
+  const p2ActiveMove = isResultPhase ? snap.lastResult?.p2Move : null;
+
   const sk1 = $('battleP1Skill');
   const sk2 = $('battleP2Skill');
-  if (sk1) sk1.innerHTML = snap.p1Skill ? formatSkillInfo(snap.p1Skill) : (snap.p1SkillUsed ? formatSkillHidden() : '');
-  if (sk2) sk2.innerHTML = snap.p2Skill ? formatSkillInfo(snap.p2Skill) : (snap.p2SkillUsed ? formatSkillHidden() : '');
+  if (sk1) sk1.innerHTML = snap.p1Skill ? formatSkillInfo(snap.p1Skill, p1ActiveMove) : (snap.p1SkillUsed ? formatSkillHidden() : '');
+  if (sk2) sk2.innerHTML = snap.p2Skill ? formatSkillInfo(snap.p2Skill, p2ActiveMove) : (snap.p2SkillUsed ? formatSkillHidden() : '');
+
+  const d1El = $('battleDeltaP1');
+  const d2El = $('battleDeltaP2');
+  if (d1El) {
+    if (isResultPhase && snap.lastResult) {
+      const r = snap.lastResult;
+      let html = '';
+      if (r.damageToP1 > 0) html += `<div class="delta-dmg">−${r.damageToP1}</div>`;
+      if (r.p1Heal > 0) html += `<div class="delta-heal">+${r.p1Heal}</div>`;
+      d1El.innerHTML = html;
+    } else { d1El.innerHTML = ''; }
+  }
+  if (d2El) {
+    if (isResultPhase && snap.lastResult) {
+      const r = snap.lastResult;
+      let html = '';
+      if (r.damageToP2 > 0) html += `<div class="delta-dmg">−${r.damageToP2}</div>`;
+      if (r.p2Heal > 0) html += `<div class="delta-heal">+${r.p2Heal}</div>`;
+      d2El.innerHTML = html;
+    } else { d2El.innerHTML = ''; }
+  }
 
   const p1 = snap.p1;
   const p2 = snap.p2;
@@ -381,24 +420,33 @@ function renderBattleView(snap) {
       rs.innerHTML = '<div class="battle-reveal-hint">即將公佈勝負…</div>';
     } else if (snap.phase === 'show_result' && snap.lastResult) {
       const r = snap.lastResult;
-      let html = '';
+      const p1MoveClass = r.winner === 'p1' ? 'result-move-chip result-move-win' : r.winner === 'p2' ? 'result-move-chip result-move-lose' : 'result-move-chip';
+      const p2MoveClass = r.winner === 'p2' ? 'result-move-chip result-move-win' : r.winner === 'p1' ? 'result-move-chip result-move-lose' : 'result-move-chip';
+      let outcomeHtml = '';
       if (r.winner === 'tie') {
-        html = `<div class="battle-result-title">平手</div><p class="battle-result-detail">雙方本回合 <strong>0</strong> 傷害。</p>`;
-        html += `<p class="battle-result-detail">${rpsLabel(r.p1Move)} 對 ${rpsLabel(r.p2Move)}</p>`;
+        outcomeHtml = `<div class="result-outcome result-outcome-tie">⚖️ 平手</div><p class="result-note">雙方本回合 0 傷害</p>`;
       } else {
         const winName = r.winner === 'p1' ? (p1?.name || 'P1') : (p2?.name || 'P2');
-        const dmg = r.winner === 'p1' ? r.damageToP2 : r.damageToP1;
-        html = `<div class="battle-result-title">${escapeHtml(winName)} 勝</div>`;
-        html += `<p class="battle-result-detail">${rpsLabel(r.p1Move)} 對 ${rpsLabel(r.p2Move)}，造成 <strong>${dmg}</strong> 傷害。</p>`;
+        outcomeHtml = `<div class="result-outcome result-outcome-win">🏅 ${escapeHtml(winName)} 勝</div>`;
       }
-      rs.innerHTML = html;
+      rs.innerHTML = `<div class="result-card">
+        ${outcomeHtml}
+        <div class="result-moves-row">
+          <span class="${p1MoveClass}">${rpsLabel(r.p1Move)}</span>
+          <span class="result-vs-sep">VS</span>
+          <span class="${p2MoveClass}">${rpsLabel(r.p2Move)}</span>
+        </div>
+      </div>`;
     } else if (snap.phase === 'match_over' && snap.lastResult) {
       const mw = snap.matchWinner || snap.lastResult.matchWinner;
-      let title = '對戰結束';
-      if (mw === 'p1') title = `${escapeHtml(p1?.name || 'P1')} 獲勝！`;
-      else if (mw === 'p2') title = `${escapeHtml(p2?.name || 'P2')} 獲勝！`;
-      else if (mw === 'tie') title = '雙方同歸於盡（平手）';
-      rs.innerHTML = `<div class="battle-result-title big">${title}</div><p class="battle-result-detail muted">可再感應啟動卡開新局，或按「開始本場」重新選角。</p>`;
+      let champion = '對戰結束';
+      if (mw === 'p1') champion = `🏆 ${escapeHtml(p1?.name || 'P1')} 獲勝！`;
+      else if (mw === 'p2') champion = `🏆 ${escapeHtml(p2?.name || 'P2')} 獲勝！`;
+      else if (mw === 'tie') champion = '💥 雙方同歸於盡';
+      rs.innerHTML = `<div class="result-card result-card-over">
+        <div class="result-outcome result-outcome-champion">${champion}</div>
+        <p class="result-note muted">可再感應啟動卡開新局，或按「開始本場」重新選角。</p>
+      </div>`;
     } else {
       rs.innerHTML = '';
     }
