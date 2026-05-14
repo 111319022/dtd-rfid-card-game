@@ -218,9 +218,7 @@ button.danger:hover:not(:disabled) {
   font-family: var(--font-pixel);
   font-size: 84px; color: var(--neon-purple);
   text-shadow:
-    0 0 10px var(--neon-purple),
-    0 0 22px var(--neon-purple),
-    0 0 44px rgba(177,74,255,0.55),
+    0 0 8px rgba(177,74,255,0.8),
     6px 6px 0 var(--neon-magenta);
   letter-spacing: 8px;
 }
@@ -228,8 +226,7 @@ button.danger:hover:not(:disabled) {
   font-family: var(--font-cjk);
   font-size: 68px; font-weight: 900; color: var(--neon-magenta);
   text-shadow:
-    0 0 10px var(--neon-magenta),
-    0 0 22px var(--neon-magenta),
+    0 0 8px rgba(255,45,146,0.8),
     4px 4px 0 var(--neon-purple);
   letter-spacing: 10px;
 }
@@ -248,39 +245,22 @@ button.danger:hover:not(:disabled) {
 @keyframes blinkSlow { 0%, 60% { opacity: 1; } 60.01%, 100% { opacity: 0.3; } }
 
 .welcome-prompts {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 36px;
+  display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px;
+  align-items: center; justify-content: center;
 }
-@media (max-width: 600px) { .welcome-prompts { grid-template-columns: 1fr; } }
 
-.welcome-prompt {
-  background:
-    linear-gradient(180deg, rgba(177,74,255,0.04), transparent),
-    var(--panel);
-  border: 2px solid var(--border);
-  border-radius: 4px;
-  padding: 24px 20px;
-  position: relative;
-  transition: 0.15s;
+.welcome-prompt-line {
+  font-family: var(--font-cjk); font-size: 16px; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
 }
-.welcome-prompt::before {
-  content: ''; position: absolute; inset: -1px; pointer-events: none;
-  border: 1px solid transparent; border-radius: 4px;
-  transition: 0.15s;
-}
-.welcome-prompt:hover {
-  border-color: var(--neon-purple);
-  transform: translateY(-2px);
-  box-shadow: 0 0 24px rgba(177,74,255,0.25);
-}
-.welcome-prompt:hover::before { border-color: rgba(177,74,255,0.55); inset: -4px; }
 
-.welcome-prompt-icon { font-size: 40px; margin-bottom: 14px; filter: drop-shadow(0 0 6px rgba(177,74,255,0.4)); }
-.welcome-prompt-title {
+.welcome-prompt-icon { font-size: 22px; filter: drop-shadow(0 0 6px rgba(177,74,255,0.4)); }
+.welcome-prompt-line strong {
   font-family: var(--font-pixel); font-size: 15px;
-  color: var(--neon-purple); margin-bottom: 10px; letter-spacing: 0.06em;
+  color: var(--neon-purple); letter-spacing: 0.06em;
   text-shadow: 0 0 6px rgba(177,74,255,0.4);
 }
-.welcome-prompt-desc { font-family: var(--font-cjk); font-size: 15px; color: var(--muted); line-height: 1.55; }
+.welcome-prompt-line .desc { font-family: var(--font-cjk); font-size: 15px; color: var(--muted); }
 
 .welcome-conn {
   display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center;
@@ -1040,3 +1020,46 @@ button.small { padding: 5px 10px; font-size: 9px; }
 
 /* Hide bottom rules text once a game is in progress (only show in lobby) */
 .battle-duel:not([data-phase="lobby"]) .battle-rules { display: none; }
+
+/* ============================================================
+   Settings Theme Overrides (Normal Font & Neutral Colors)
+   ============================================================ */
+#view-settings,
+#view-settings h2, #view-settings h3, #view-settings p,
+#view-settings label, #view-settings .settings-desc,
+#view-settings .hint, #view-settings .empty, 
+#view-settings .tab-btn, #view-settings button {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: normal; text-shadow: none;
+}
+#view-settings h2 { color: #f5f5f5; font-weight: 600; font-size: 18px; margin-bottom: 12px; }
+#view-settings .settings-desc { color: #aaaaaa; }
+#view-settings .tab-btn { font-weight: 500; font-size: 14px; }
+#view-settings input[type=text],
+#view-settings input[type=number],
+#view-settings select {
+  font-family: inherit;
+  color: #eeeeee;
+  background: #11111a;
+  border: 1px solid #33334d;
+}
+#view-settings input:focus,
+#view-settings select:focus {
+  border-color: #5fb4ff;
+  box-shadow: 0 0 0 1px #5fb4ff;
+}
+#view-settings .btn-row button { font-weight: 500; }
+#view-settings .confirm-panel h3 { color: #f5d000; }
+#view-settings .log .line.json { color: #5fb4ff; }
+#view-settings .mode-label .tag.edit { background: #5fb4ff; }
+#view-settings .card .cname { font-family: inherit; }
+#view-settings .card .cuid { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; color: #5fb4ff; }
+#view-settings .confirm-card .cuid { color: #5fb4ff; font-family: monospace; }
+#view-settings .badge.skill { background: #5fb4ff; }
+/* Keep brand topbar looking consistent, just without heavy neon */
+#view-settings .brand-mini .brand-en,
+#view-settings .brand-mini .brand-cjk {
+  text-shadow: none;
+}
+#view-settings .brand-mini .brand-en { font-family: var(--font-pixel); color: #aaaaaa; }
+#view-settings .brand-mini .brand-cjk { font-family: var(--font-cjk); color: #ffffff; }
