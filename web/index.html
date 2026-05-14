@@ -413,7 +413,17 @@ function buildResultReport(snap) {
     summary = `<div class="report-summary">${escapeHtml(winName)} 的 ${rpsLabel(r.winner === 'p1' ? r.p1Move : r.p2Move)} 擊敗 ${escapeHtml(loseName)} 的 ${rpsLabel(r.winner === 'p1' ? r.p2Move : r.p1Move)}，造成 <strong>${dmg}</strong> 點傷害</div>`;
   }
 
-  return `<div class="report-panel ${isOver ? 'report-panel-over' : ''}">${banner}${clash}${skills}${summary}</div>`;
+  // 5. Continue prompt (only on between-round result, not match over, not pending matchWinner)
+  let continuePrompt = '';
+  if (!isOver && !r.matchWinner) {
+    continuePrompt = `<div class="report-continue">
+      <span class="report-continue-icon">👆</span>
+      <span class="report-continue-text">請 <strong>P1</strong> 感應任一卡片繼續下一回合</span>
+      <span class="report-continue-hint">（出拳卡或技能卡會直接帶入下回合）</span>
+    </div>`;
+  }
+
+  return `<div class="report-panel ${isOver ? 'report-panel-over' : ''}">${banner}${clash}${skills}${summary}${continuePrompt}</div>`;
 }
 
 function renderBattleView(snap) {

@@ -19,6 +19,7 @@ export const Phase = {
 const MS_REVEAL_HIDDEN = 2000;
 const MS_REVEAL_TO_DAMAGE = 1250;
 const MS_POST_RESULT = 3200;
+const MS_RESULT_TO_TURN_P1 = 700;
 
 const RPS_ORDER = ['scissors', 'rock', 'paper'];
 
@@ -274,15 +275,47 @@ export function createBattleController({ onUpdate, onToast }) {
     emit();
 
     clearResultTimer();
-    resultTimer = setTimeout(() => {
-      resultTimer = null;
-      if (matchWinner) {
+    // 終局：自動進入 MATCH_OVER（讓玩家看到冠軍畫面）
+    // 一般回合結束：停在 SHOW_RESULT，等待 P1 感應任一卡片才進下一回合
+    if (matchWinner) {
+      resultTimer = setTimeout(() => {
+        resultTimer = null;
         phase = Phase.MATCH_OVER;
         emit();
-      } else {
-        beginRoundAfterResult();
-      }
-    }, MS_POST_RESULT);
+      }, MS_POST_RESULT);
+    }
+  }
+
+  /** 結算畫面感應卡片：進入下一回合的 TURN_P1，並嘗試把此卡帶入 */
+  function handleResultAdvance(card) {
+    clearResultTimer();
+    // 安全網：終局時不應走此路徑（讓自動 timer 收尾即可）
+    if (p1Hp <= 0 || p2Hp <= 0) {
+      phase = Phase.MATCH_OVER;
+      emit();
+      return true;
+    }
+
+    // 進入下一回合的 TURN_P1（清空上回合狀態）
+    p1SkillBuff = p2SkillBuff = null;
+    p1Move = p2Move = null;
+    lastResult = null;
+    round += 1;
+    phase = Phase.TURN_P1;
+    emit();
+
+    const type = card?.type;
+    if (type === 'SKILL' || type === 'RPS') {
+      // 延遲短暫時間讓 UI 顯示 TURN_P1 畫面後再套用卡片
+      resultTimer = setTimeout(() => {
+        resultTimer = null;
+        if (phase === Phase.TURN_P1) handleTurnCard(card, 'p1');
+      }, MS_RESULT_TO_TURN_P1);
+    } else {
+      // CHARACTER / UNKNOWN：只用來「結束結算畫面」，無法套用
+      toast('此卡無法套用，已進入下一回合（請 P1 出牌）');
+    }
+    return true;
   }
 
   /** P2 出拳後：2 秒隱藏 → 揭曉兩側 → 1.25 秒後結算 */
@@ -361,6 +394,11 @@ export function createBattleController({ onUpdate, onToast }) {
       return false;
     }
 
+    // 結算畫面：任一卡片（含 UNKNOWN）都會推進到下一回合
+    if (phase === Phase.SHOW_RESULT) {
+      return handleResultAdvance(card);
+    }
+
     if (!type || type === 'UNKNOWN') {
       toast('無法辨識此卡，請先在管理器寫入資料。');
       return false;
@@ -400,8 +438,7 @@ export function createBattleController({ onUpdate, onToast }) {
 
     if (
       phase === Phase.RPS_PENDING_REVEAL ||
-      phase === Phase.RPS_REVEALED ||
-      phase === Phase.SHOW_RESULT
+      phase === Phase.RPS_REVEALED
     ) {
       toast('結算中，請稍候…');
       return false;
