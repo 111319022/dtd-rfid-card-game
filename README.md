@@ -1,4 +1,4 @@
-# RFID Card Game
+# DTD大亂鬥
 
 這是一個以 **ESP32 + MFRC522 讀卡機** 搭配純前端網頁實作的 RFID 卡牌桌遊。玩家將實體 NFC/RFID 卡片靠近讀卡機，透過「剪刀石頭布」機制進行雙人對戰。卡片資料（角色、技能、出拳）直接寫入 Mifare Classic 卡片，網頁與 ESP32 之間以 **Web Serial API** 進行即時通訊。
 
