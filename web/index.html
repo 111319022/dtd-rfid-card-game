@@ -45,7 +45,7 @@
   </div>
   <div class="battle-duel">
     <div class="panel battle-side battle-p1" id="battlePanelP1">
-      <div class="battle-side-label">P1</div>
+      <div class="battle-side-label">1P</div>
       <div class="battle-portrait" id="battlePortraitFrameP1">
         <span class="battle-portrait-inner" id="battleP1Portrait">—</span>
       </div>
@@ -77,12 +77,12 @@
         <div class="battle-notification-zone">
           <div class="battle-toast" id="battleToast" aria-live="polite"></div>
         </div>
-        <p class="battle-rules hint">規則：感應「啟動卡」進入候機室，再感應一次啟動卡開始本場；每回合 P1 出牌 → P2 出牌（每人可先感應 1 張技能卡，再感應 1 張出拳卡；也可直接出拳）。雙方出拳後先揭曉再公佈傷害。請下一位玩家換卡前稍候約 1.5 秒（讀卡防彈跳）。</p>
+        <p class="battle-rules hint">規則：感應「啟動卡」進入候機室，再感應一次啟動卡開始本場；每回合 1P 出牌 → 2P 出牌（每人可先感應 1 張技能卡，再感應 1 張出拳卡；也可直接出拳）。雙方出拳後先揭曉再公佈傷害。請下一位玩家換卡前稍候約 1.5 秒（讀卡防彈跳）。</p>
       </div>
     </div>
 
     <div class="panel battle-side battle-p2" id="battlePanelP2">
-      <div class="battle-side-label">P2</div>
+      <div class="battle-side-label">2P</div>
       <div class="battle-portrait" id="battlePortraitFrameP2">
         <span class="battle-portrait-inner" id="battleP2Portrait">—</span>
       </div>
@@ -205,8 +205,8 @@
             <div class="form-row">
               <label>玩家</label>
               <select id="rps_player">
-                <option value="1">P1 專用</option>
-                <option value="2">P2 專用</option>
+                <option value="1">1P 專用</option>
+                <option value="2">2P 專用</option>
                 <option value="0">通用（不限玩家）</option>
               </select>
             </div>
@@ -351,10 +351,20 @@ function buildSkillCell(skill, activeMove) {
   return `<div class="report-skill-name">${escapeHtml(skill.name || '(未命名)')}</div><div class="report-skill-effects">${effects}</div>`;
 }
 
+function rpsCircle(move) {
+  const map = {
+    rock:     { cls: 'rps-rock',     glyph: '✊' },
+    scissors: { cls: 'rps-scissors', glyph: '✌️' },
+    paper:    { cls: 'rps-paper',    glyph: '✋' },
+  };
+  const m = map[move] || { cls: '', glyph: '?' };
+  return `<div class="clash-rps-circle ${m.cls}"><span class="rps-glyph">${m.glyph}</span></div>`;
+}
+
 function buildResultReport(snap) {
   const r = snap.lastResult;
-  const p1Name = snap.p1?.name || 'P1';
-  const p2Name = snap.p2?.name || 'P2';
+  const p1Name = snap.p1?.name || '1P';
+  const p2Name = snap.p2?.name || '2P';
   const isOver = snap.phase === 'match_over';
 
   // 1. Banner
@@ -371,19 +381,19 @@ function buildResultReport(snap) {
     banner = `<div class="report-banner win">🏅 本回合：<strong>${escapeHtml(winName)}</strong> 勝</div>`;
   }
 
-  // 2. Clash row (moves)
+  // 2. Clash row (RPS circles)
   const p1Cls = r.winner === 'p1' ? 'clash-side win' : r.winner === 'p2' ? 'clash-side lose' : 'clash-side';
   const p2Cls = r.winner === 'p2' ? 'clash-side win' : r.winner === 'p1' ? 'clash-side lose' : 'clash-side';
   const clash = `
     <div class="report-clash">
       <div class="${p1Cls}">
-        <div class="clash-label">P1</div>
-        <div class="clash-move">${rpsLabel(r.p1Move)}</div>
+        <div class="clash-label">1P</div>
+        ${rpsCircle(r.p1Move)}
       </div>
       <div class="clash-vs">VS</div>
       <div class="${p2Cls}">
-        <div class="clash-label">P2</div>
-        <div class="clash-move">${rpsLabel(r.p2Move)}</div>
+        <div class="clash-label">2P</div>
+        ${rpsCircle(r.p2Move)}
       </div>
     </div>`;
 
@@ -391,11 +401,11 @@ function buildResultReport(snap) {
   const skills = `
     <div class="report-skills">
       <div class="report-skill-col">
-        <div class="report-skill-label">P1 技能</div>
+        <div class="report-skill-label">1P 技能</div>
         ${buildSkillCell(snap.p1Skill, r.p1Move)}
       </div>
       <div class="report-skill-col">
-        <div class="report-skill-label">P2 技能</div>
+        <div class="report-skill-label">2P 技能</div>
         ${buildSkillCell(snap.p2Skill, r.p2Move)}
       </div>
     </div>`;
@@ -418,7 +428,7 @@ function buildResultReport(snap) {
   if (!isOver && !r.matchWinner) {
     continuePrompt = `<div class="report-continue">
       <span class="report-continue-icon">👆</span>
-      <span class="report-continue-text">請 <strong>P1</strong> 感應任一卡片繼續下一回合</span>
+      <span class="report-continue-text">請 <strong>1P</strong> 感應任一卡片繼續下一回合</span>
       <span class="report-continue-hint">（出拳卡或技能卡會直接帶入下回合）</span>
     </div>`;
   }
