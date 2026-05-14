@@ -344,47 +344,103 @@
     font-size: 18px; font-weight: 700; color: var(--accent2); padding: 12px 8px; text-align: center;
   }
 
-  /* Result card */
-  .result-card {
+  /* === Unified result report (center) === */
+  .report-panel {
     background: var(--panel2);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 16px 14px 14px;
     text-align: center;
-    animation: fadein 0.25s ease;
+    animation: fadein 0.3s ease;
+    display: flex; flex-direction: column; gap: 12px;
   }
-  .result-card-over {
+  .report-panel-over {
     border-color: var(--accent2);
-    box-shadow: 0 0 0 1px rgba(249,199,79,0.15), 0 4px 24px rgba(0,0,0,0.35);
+    box-shadow: 0 0 0 1px rgba(249,199,79,0.2), 0 6px 32px rgba(0,0,0,0.4);
   }
-  .result-outcome {
-    font-size: 22px; font-weight: 800; margin-bottom: 10px; line-height: 1.2;
-  }
-  .result-outcome-tie { color: var(--muted); }
-  .result-outcome-win { color: var(--accent2); }
-  .result-outcome-champion { font-size: 26px; color: var(--accent2); }
-  .result-note { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
-  .result-moves-row {
-    display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
-  }
-  .result-vs-sep {
-    font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em;
-  }
-  .result-move-chip {
-    font-size: 14px; font-weight: 600;
-    padding: 5px 12px; border-radius: 20px;
-    background: var(--panel); border: 1px solid var(--border);
-    color: var(--text);
-  }
-  .result-move-chip.result-move-win {
-    background: rgba(249,199,79,0.15);
-    border-color: rgba(249,199,79,0.5);
+  .report-banner {
+    font-size: 22px; font-weight: 800; line-height: 1.25;
     color: var(--accent2);
-    font-size: 16px; font-weight: 800;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
   }
-  .result-move-chip.result-move-lose {
-    opacity: 0.38;
+  .report-banner.tie { color: var(--muted); }
+  .report-banner.champion { font-size: 26px; }
+  .report-banner strong { color: var(--accent2); }
+
+  .report-clash {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.22);
+    border-radius: 10px;
+    padding: 10px 8px;
   }
+  .clash-side {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .clash-side.win {
+    background: rgba(249,199,79,0.15);
+    box-shadow: 0 0 0 1px rgba(249,199,79,0.45);
+  }
+  .clash-side.lose { opacity: 0.4; }
+  .clash-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .clash-move { font-size: 22px; font-weight: 800; }
+  .clash-side.win .clash-move { color: var(--accent2); font-size: 26px; }
+  .clash-vs {
+    font-size: 13px; font-weight: 800; color: var(--muted); letter-spacing: 0.12em;
+  }
+
+  .report-skills {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .report-skill-col {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .report-skill-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+  }
+  .report-skill-name {
+    font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 5px;
+  }
+  .report-skill-effects {
+    display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center;
+  }
+  .report-skill-empty {
+    font-size: 12px; color: var(--muted); opacity: 0.65; padding: 4px 0;
+  }
+
+  .report-summary {
+    font-size: 13px; line-height: 1.5; color: var(--text);
+    padding-top: 4px;
+  }
+  .report-summary strong {
+    font-size: 18px; font-weight: 900; color: var(--err);
+    margin: 0 2px;
+  }
+
+  /* === Hide panel clutter during result phase === */
+  .battle-duel[data-result-phase="1"] .battle-skill-info,
+  .battle-duel[data-result-phase="1"] .battle-rps-cluster {
+    display: none;
+  }
+  .battle-duel[data-result-phase="1"] .battle-delta {
+    min-height: 3em;
+    margin-top: 12px;
+  }
+  .battle-duel[data-result-phase="1"] .delta-dmg { font-size: 56px; }
+  .battle-duel[data-result-phase="1"] .delta-heal { font-size: 44px; }
+  .delta-self { opacity: 0.85; }
 
   /* Notification zone (toast) */
   .battle-notification-zone {

@@ -329,14 +329,110 @@ function formatSkillInfo(skill, activeMove = null) {
   return `<div class="skill-name-label">${escapeHtml(skill.name || '(未命名)')}</div><div class="battle-skill-effect">${effect}</div>`;
 }
 
+function buildSkillCell(skill, activeMove) {
+  if (!skill) return '<div class="report-skill-empty">— 未使用 —</div>';
+  const parts = [];
+  const heal = Number(skill.hp_heal) || 0;
+  if (heal > 0) parts.push(`<span class="skill-heal-tag">回血 +${heal}</span>`);
+  else if (heal < 0) parts.push(`<span class="skill-dmg-tag">自損 ${heal}</span>`);
+  const muls = [
+    ['✊', skill.mul_rock, 'rock'],
+    ['✌️', skill.mul_scissors, 'scissors'],
+    ['✋', skill.mul_paper, 'paper'],
+  ];
+  muls.forEach(([icon, v, move]) => {
+    const n = Number(v);
+    if (!Number.isNaN(n) && n !== 1) {
+      const cls = move === activeMove ? 'skill-mul-active' : 'skill-mul-other';
+      parts.push(`<span class="${cls}">${icon}×${n}</span>`);
+    }
+  });
+  const effects = parts.length ? parts.join(' ') : '<span class="muted">無數值加成</span>';
+  return `<div class="report-skill-name">${escapeHtml(skill.name || '(未命名)')}</div><div class="report-skill-effects">${effects}</div>`;
+}
+
+function buildResultReport(snap) {
+  const r = snap.lastResult;
+  const p1Name = snap.p1?.name || 'P1';
+  const p2Name = snap.p2?.name || 'P2';
+  const isOver = snap.phase === 'match_over';
+
+  // 1. Banner
+  let banner = '';
+  if (isOver) {
+    const mw = snap.matchWinner || r.matchWinner;
+    if (mw === 'p1') banner = `<div class="report-banner champion">🏆 ${escapeHtml(p1Name)} 獲得最終勝利</div>`;
+    else if (mw === 'p2') banner = `<div class="report-banner champion">🏆 ${escapeHtml(p2Name)} 獲得最終勝利</div>`;
+    else banner = `<div class="report-banner champion tie">💥 雙方同歸於盡</div>`;
+  } else if (r.winner === 'tie') {
+    banner = `<div class="report-banner tie">⚖️ 本回合平手</div>`;
+  } else {
+    const winName = r.winner === 'p1' ? p1Name : p2Name;
+    banner = `<div class="report-banner win">🏅 本回合：<strong>${escapeHtml(winName)}</strong> 勝</div>`;
+  }
+
+  // 2. Clash row (moves)
+  const p1Cls = r.winner === 'p1' ? 'clash-side win' : r.winner === 'p2' ? 'clash-side lose' : 'clash-side';
+  const p2Cls = r.winner === 'p2' ? 'clash-side win' : r.winner === 'p1' ? 'clash-side lose' : 'clash-side';
+  const clash = `
+    <div class="report-clash">
+      <div class="${p1Cls}">
+        <div class="clash-label">P1</div>
+        <div class="clash-move">${rpsLabel(r.p1Move)}</div>
+      </div>
+      <div class="clash-vs">VS</div>
+      <div class="${p2Cls}">
+        <div class="clash-label">P2</div>
+        <div class="clash-move">${rpsLabel(r.p2Move)}</div>
+      </div>
+    </div>`;
+
+  // 3. Skills attribution
+  const skills = `
+    <div class="report-skills">
+      <div class="report-skill-col">
+        <div class="report-skill-label">P1 技能</div>
+        ${buildSkillCell(snap.p1Skill, r.p1Move)}
+      </div>
+      <div class="report-skill-col">
+        <div class="report-skill-label">P2 技能</div>
+        ${buildSkillCell(snap.p2Skill, r.p2Move)}
+      </div>
+    </div>`;
+
+  // 4. Summary
+  let summary = '';
+  if (isOver) {
+    summary = `<div class="report-summary muted">可再感應啟動卡開新局，或按「開始本場」重新選角</div>`;
+  } else if (r.winner === 'tie') {
+    summary = `<div class="report-summary">本回合無人受到出拳傷害</div>`;
+  } else {
+    const dmg = r.winner === 'p1' ? r.damageToP2 : r.damageToP1;
+    const winName = r.winner === 'p1' ? p1Name : p2Name;
+    const loseName = r.winner === 'p1' ? p2Name : p1Name;
+    summary = `<div class="report-summary">${escapeHtml(winName)} 的 ${rpsLabel(r.winner === 'p1' ? r.p1Move : r.p2Move)} 擊敗 ${escapeHtml(loseName)} 的 ${rpsLabel(r.winner === 'p1' ? r.p2Move : r.p1Move)}，造成 <strong>${dmg}</strong> 點傷害</div>`;
+  }
+
+  return `<div class="report-panel ${isOver ? 'report-panel-over' : ''}">${banner}${clash}${skills}${summary}</div>`;
+}
+
 function renderBattleView(snap) {
   const pr = $('battlePrompt');
   const rd = $('battleRound');
   const rs = $('battleResult');
   const bStart = $('battleStartBtn');
   const sdNotice = $('battleSkillDraw');
+  const duel = document.querySelector('.battle-duel');
   if (sdNotice) sdNotice.style.display = snap.skillDrawRound ? '' : 'none';
-  if (pr) pr.textContent = snap.prompt || '';
+
+  const isResultPhase = snap.phase === 'show_result' || snap.phase === 'match_over';
+  if (duel) duel.dataset.resultPhase = isResultPhase ? '1' : '0';
+
+  if (pr) {
+    // 結果階段隱藏 prompt（避免與中央戰報橫幅重複）
+    pr.textContent = isResultPhase ? '' : (snap.prompt || '');
+    pr.style.display = isResultPhase ? 'none' : '';
+  }
   if (rd) {
     if (snap.phase === 'lobby' || snap.phase === 'match_over') rd.textContent = '';
     else if (snap.round > 0) rd.textContent = `第 ${snap.round} 回合`;
@@ -344,7 +440,6 @@ function renderBattleView(snap) {
   }
   if (bStart) bStart.style.display = snap.showStartMatch ? '' : 'none';
 
-  const isResultPhase = snap.phase === 'show_result' || snap.phase === 'match_over';
   const p1ActiveMove = isResultPhase ? snap.lastResult?.p1Move : null;
   const p2ActiveMove = isResultPhase ? snap.lastResult?.p2Move : null;
 
@@ -353,26 +448,17 @@ function renderBattleView(snap) {
   if (sk1) sk1.innerHTML = snap.p1Skill ? formatSkillInfo(snap.p1Skill, p1ActiveMove) : (snap.p1SkillUsed ? formatSkillHidden() : '');
   if (sk2) sk2.innerHTML = snap.p2Skill ? formatSkillInfo(snap.p2Skill, p2ActiveMove) : (snap.p2SkillUsed ? formatSkillHidden() : '');
 
+  const buildDelta = (dmg, heal) => {
+    let html = '';
+    if (dmg > 0) html += `<div class="delta-dmg" title="受到傷害">−${dmg}</div>`;
+    if (heal > 0) html += `<div class="delta-heal" title="技能回血">+${heal}</div>`;
+    else if (heal < 0) html += `<div class="delta-dmg delta-self" title="技能自損">${heal}</div>`;
+    return html;
+  };
   const d1El = $('battleDeltaP1');
   const d2El = $('battleDeltaP2');
-  if (d1El) {
-    if (isResultPhase && snap.lastResult) {
-      const r = snap.lastResult;
-      let html = '';
-      if (r.damageToP1 > 0) html += `<div class="delta-dmg">−${r.damageToP1}</div>`;
-      if (r.p1Heal > 0) html += `<div class="delta-heal">+${r.p1Heal}</div>`;
-      d1El.innerHTML = html;
-    } else { d1El.innerHTML = ''; }
-  }
-  if (d2El) {
-    if (isResultPhase && snap.lastResult) {
-      const r = snap.lastResult;
-      let html = '';
-      if (r.damageToP2 > 0) html += `<div class="delta-dmg">−${r.damageToP2}</div>`;
-      if (r.p2Heal > 0) html += `<div class="delta-heal">+${r.p2Heal}</div>`;
-      d2El.innerHTML = html;
-    } else { d2El.innerHTML = ''; }
-  }
+  if (d1El) d1El.innerHTML = (isResultPhase && snap.lastResult) ? buildDelta(snap.lastResult.damageToP1, snap.lastResult.p1Heal) : '';
+  if (d2El) d2El.innerHTML = (isResultPhase && snap.lastResult) ? buildDelta(snap.lastResult.damageToP2, snap.lastResult.p2Heal) : '';
 
   const p1 = snap.p1;
   const p2 = snap.p2;
@@ -418,35 +504,8 @@ function renderBattleView(snap) {
       rs.innerHTML = '<div class="battle-reveal-hint">待揭曉…</div>';
     } else if (snap.phase === 'rps_revealed') {
       rs.innerHTML = '<div class="battle-reveal-hint">即將公佈勝負…</div>';
-    } else if (snap.phase === 'show_result' && snap.lastResult) {
-      const r = snap.lastResult;
-      const p1MoveClass = r.winner === 'p1' ? 'result-move-chip result-move-win' : r.winner === 'p2' ? 'result-move-chip result-move-lose' : 'result-move-chip';
-      const p2MoveClass = r.winner === 'p2' ? 'result-move-chip result-move-win' : r.winner === 'p1' ? 'result-move-chip result-move-lose' : 'result-move-chip';
-      let outcomeHtml = '';
-      if (r.winner === 'tie') {
-        outcomeHtml = `<div class="result-outcome result-outcome-tie">⚖️ 平手</div><p class="result-note">雙方本回合 0 傷害</p>`;
-      } else {
-        const winName = r.winner === 'p1' ? (p1?.name || 'P1') : (p2?.name || 'P2');
-        outcomeHtml = `<div class="result-outcome result-outcome-win">🏅 ${escapeHtml(winName)} 勝</div>`;
-      }
-      rs.innerHTML = `<div class="result-card">
-        ${outcomeHtml}
-        <div class="result-moves-row">
-          <span class="${p1MoveClass}">${rpsLabel(r.p1Move)}</span>
-          <span class="result-vs-sep">VS</span>
-          <span class="${p2MoveClass}">${rpsLabel(r.p2Move)}</span>
-        </div>
-      </div>`;
-    } else if (snap.phase === 'match_over' && snap.lastResult) {
-      const mw = snap.matchWinner || snap.lastResult.matchWinner;
-      let champion = '對戰結束';
-      if (mw === 'p1') champion = `🏆 ${escapeHtml(p1?.name || 'P1')} 獲勝！`;
-      else if (mw === 'p2') champion = `🏆 ${escapeHtml(p2?.name || 'P2')} 獲勝！`;
-      else if (mw === 'tie') champion = '💥 雙方同歸於盡';
-      rs.innerHTML = `<div class="result-card result-card-over">
-        <div class="result-outcome result-outcome-champion">${champion}</div>
-        <p class="result-note muted">可再感應啟動卡開新局，或按「開始本場」重新選角。</p>
-      </div>`;
+    } else if (isResultPhase && snap.lastResult) {
+      rs.innerHTML = buildResultReport(snap);
     } else {
       rs.innerHTML = '';
     }
