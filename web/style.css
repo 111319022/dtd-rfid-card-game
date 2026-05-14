@@ -376,25 +376,45 @@
     padding: 10px 8px;
   }
   .clash-side {
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    padding: 6px 8px;
-    border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 8px;
+    border-radius: 10px;
     transition: all 0.2s;
   }
   .clash-side.win {
     background: rgba(249,199,79,0.15);
     box-shadow: 0 0 0 1px rgba(249,199,79,0.45);
   }
-  .clash-side.lose { opacity: 0.4; }
+  .clash-side.lose { opacity: 0.42; }
   .clash-label {
     font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
     color: var(--muted); text-transform: uppercase;
   }
-  .clash-move { font-size: 22px; font-weight: 800; }
-  .clash-side.win .clash-move { color: var(--accent2); font-size: 26px; }
   .clash-vs {
     font-size: 13px; font-weight: 800; color: var(--muted); letter-spacing: 0.12em;
   }
+
+  /* RPS 圓圈：沿用玩家面板 cluster 的配色 */
+  .clash-rps-circle {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 3px solid rgba(0,0,0,0.4);
+    box-sizing: border-box;
+    transition: transform 0.2s;
+  }
+  .clash-rps-circle .rps-glyph {
+    font-size: 30px; line-height: 1;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.45));
+  }
+  .clash-rps-circle.rps-rock     { background: radial-gradient(circle at 35% 30%, #ff6b6b, #9b1c1c); }
+  .clash-rps-circle.rps-scissors { background: radial-gradient(circle at 35% 30%, #ffe066, #b8860b); }
+  .clash-rps-circle.rps-paper    { background: radial-gradient(circle at 35% 30%, #74b9ff, #1e5799); }
+  .clash-side.win .clash-rps-circle {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 4px var(--accent2), 0 0 22px rgba(249,199,79,0.45);
+  }
+  .clash-side.lose .clash-rps-circle { opacity: 0.55; }
 
   .report-skills {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
@@ -414,7 +434,12 @@
     font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 5px;
   }
   .report-skill-effects {
-    display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center;
+    display: flex; flex-direction: column; gap: 5px;
+    align-items: center;
+  }
+  .report-skill-effects > * {
+    display: inline-block;
+    white-space: nowrap;
   }
   .report-skill-empty {
     font-size: 12px; color: var(--muted); opacity: 0.65; padding: 4px 0;
