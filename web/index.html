@@ -63,6 +63,10 @@
     <div class="col battle-col-center">
       <div class="panel battle-stage">
         <div class="battle-round" id="battleRound"></div>
+        <div class="battle-skill-draw-notice" id="battleSkillDraw" style="display:none">
+          <span class="battle-skill-draw-icon">🃏</span>
+          <span class="battle-skill-draw-text">雙方各多抽一張技能卡！</span>
+        </div>
         <div class="battle-prompt" id="battlePrompt"></div>
         <div class="battle-toast" id="battleToast" aria-live="polite"></div>
         <div class="battle-result" id="battleResult"></div>
@@ -316,6 +320,8 @@ function renderBattleView(snap) {
   const rd = $('battleRound');
   const rs = $('battleResult');
   const bStart = $('battleStartBtn');
+  const sdNotice = $('battleSkillDraw');
+  if (sdNotice) sdNotice.style.display = snap.skillDrawRound ? '' : 'none';
   if (pr) pr.textContent = snap.prompt || '';
   if (rd) {
     if (snap.phase === 'lobby' || snap.phase === 'match_over') rd.textContent = '';

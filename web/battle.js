@@ -103,6 +103,12 @@ export function createBattleController({ onUpdate, onToast }) {
     }
   }
 
+  function isSkillDrawRound() {
+    if (round < 10) return false;
+    if ((round - 10) % 3 !== 0) return false;
+    return phase === Phase.TURN_P1 || phase === Phase.TURN_P2;
+  }
+
   function snapshot() {
     const reveal = rpsRevealMode(phase);
     const showMovesToUi = reveal === 'moves' || reveal === 'full';
@@ -112,6 +118,7 @@ export function createBattleController({ onUpdate, onToast }) {
     return {
       phase,
       round,
+      skillDrawRound: isSkillDrawRound(),
       p1: p1Char
         ? {
             name: p1Char.name || 'P1',
