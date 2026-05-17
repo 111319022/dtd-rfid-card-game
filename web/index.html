@@ -302,6 +302,8 @@
     </div>
   </div>
 
+  <audio id="bgm" src="audio/homepage.ogg" loop preload="auto"></audio>
+
   <script type="module">
     import { SerialConnection, escapeHtml, badgeFor, statsHtml } from './serial.js';
     import { createBattleController } from './battle.js';
@@ -309,6 +311,36 @@
     const $ = id => document.getElementById(id);
     let currentView = 'home';
     let currentSettingsTab = 'uid';
+
+    // ============== BGM ==============
+    const bgm = $('bgm');
+    let bgmUnlocked = localStorage.getItem('bgmUnlocked') === '1';
+
+    function bgmPlay() {
+      if (!bgm) return;
+      bgm.play().catch(() => {});
+    }
+
+    function bgmPause() {
+      if (!bgm) return;
+      bgm.pause();
+    }
+
+    function unlockBgm() {
+      if (bgmUnlocked) return;
+      bgmUnlocked = true;
+      localStorage.setItem('bgmUnlocked', '1');
+      if (currentView === 'home' || currentView === 'settings') bgmPlay();
+    }
+
+    // 嘗試自動播放；若被瀏覽器擋住，等第一次互動再播
+    bgm.play().then(() => {
+      bgmUnlocked = true;
+      localStorage.setItem('bgmUnlocked', '1');
+    }).catch(() => {
+      document.addEventListener('click', unlockBgm, { once: true });
+      document.addEventListener('keydown', unlockBgm, { once: true });
+    });
 
     let battleToastTimer = null;
     function battleToast(msg) {
@@ -813,11 +845,17 @@
       $(`view-${viewId}`).classList.add('active');
       currentView = viewId;
 
+      if (viewId === 'battle') {
+        bgmPause();
+        renderBattleView(battle.getSnapshot());
+      } else {
+        if (bgmUnlocked) bgmPlay();
+      }
+
       if (viewId === 'settings') {
         renderActivationList();
         renderSettingsList();
       }
-      if (viewId === 'battle') renderBattleView(battle.getSnapshot());
     };
 
     window.switchSettingsTab = function (tab) {
