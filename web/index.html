@@ -303,6 +303,8 @@
   </div>
 
   <audio id="bgm" src="audio/homepage.ogg" loop preload="auto" muted></audio>
+  <audio id="battleBgm" src="audio/battle.ogg" loop preload="auto" muted></audio>
+  <audio id="gameoverBgm" src="audio/battle.ogg" loop preload="auto" muted></audio>
   <button id="bgmToggleBtn" class="bgm-toggle-btn" title="音效開關">🔇</button>
 
   <script type="module">
@@ -315,27 +317,49 @@
 
     // ============== BGM ==============
     const bgm = $('bgm');
+    const battleBgm = $('battleBgm');
+    const gameoverBgm = $('gameoverBgm');
     const bgmBtn = $('bgmToggleBtn');
+    let isMuted = false;
+    let lastBattlePhase = null;
 
-    function bgmPlay() { bgm?.play().catch(() => {}); }
-    function bgmPause() { bgm?.pause(); }
+    function bgmPlay()         { bgm?.play().catch(() => {}); }
+    function bgmPause()        { bgm?.pause(); }
+    function battleBgmPlay()   { battleBgm?.play().catch(() => {}); }
+    function battleBgmPause()  { battleBgm?.pause(); }
+    function gameoverBgmPlay() { gameoverBgm?.play().catch(() => {}); }
+    function gameoverBgmPause(){ gameoverBgm?.pause(); }
 
-    function updateBgmBtn() {
-      if (bgmBtn) bgmBtn.textContent = bgm.muted ? '🔇' : '🔊';
+    function setMuted(muted) {
+      isMuted = muted;
+      if (bgm) bgm.muted = muted;
+      if (battleBgm) battleBgm.muted = muted;
+      if (gameoverBgm) gameoverBgm.muted = muted;
+      if (bgmBtn) bgmBtn.textContent = muted ? '🔇' : '🔊';
     }
 
     bgmBtn?.addEventListener('click', () => {
-      bgm.muted = !bgm.muted;
-      if (!bgm.muted) bgmPlay();
-      updateBgmBtn();
+      setMuted(!isMuted);
+      if (!isMuted) {
+        if (currentView === 'battle') {
+          if (lastBattlePhase === 'match_over') gameoverBgmPlay();
+          else battleBgmPlay();
+        } else {
+          bgmPlay();
+        }
+      }
     });
 
     // 靜音自動播放（瀏覽器不擋），第一次點擊任何地方時取消靜音
     bgmPlay();
     document.addEventListener('click', () => {
-      bgm.muted = false;
-      bgmPlay();
-      updateBgmBtn();
+      setMuted(false);
+      if (currentView === 'battle') {
+        if (lastBattlePhase === 'match_over') gameoverBgmPlay();
+        else battleBgmPlay();
+      } else {
+        bgmPlay();
+      }
     }, { once: true });
 
     let battleToastTimer = null;
@@ -645,6 +669,18 @@
     };
 
     function renderBattleView(snap) {
+      // BGM phase 切換
+      if (currentView === 'battle') {
+        if (snap.phase === 'match_over' && lastBattlePhase !== 'match_over') {
+          battleBgmPause();
+          gameoverBgmPlay();
+        } else if (snap.phase !== 'match_over' && lastBattlePhase === 'match_over') {
+          gameoverBgmPause();
+          battleBgmPlay();
+        }
+      }
+      lastBattlePhase = snap.phase;
+
       const pr = $('battlePrompt');
       const rd = $('battleRound');
       const rs = $('battleResult');
@@ -843,8 +879,12 @@
 
       if (viewId === 'battle') {
         bgmPause();
+        lastBattlePhase = null;
+        battleBgmPlay();
         renderBattleView(battle.getSnapshot());
       } else {
+        battleBgmPause();
+        gameoverBgmPause();
         bgmPlay();
       }
 
