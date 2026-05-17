@@ -425,6 +425,7 @@ button.warn:hover:not(:disabled) {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  margin-top: 28px;
   margin-bottom: 36px;
   align-items: center;
   justify-content: center;
