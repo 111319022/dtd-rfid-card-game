@@ -2028,6 +2028,71 @@ button.small {
   text-shadow: 0 0 8px var(--neon-green), 0 0 16px rgba(46, 255, 154, 0.5);
 }
 
+/* Upcoming skill draw warning (shown in result panel of round before draw) */
+.report-skill-draw-warning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(255, 230, 0, 0.14), rgba(255, 150, 0, 0.1));
+  border: 2px solid var(--neon-yellow);
+  border-radius: 4px;
+  box-shadow: 0 0 18px rgba(245, 208, 0, 0.5), inset 0 0 12px rgba(245, 208, 0, 0.12);
+  animation: skillDrawWarnPulse 1s ease-in-out infinite;
+}
+
+@keyframes skillDrawWarnPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(245, 208, 0, 0.4), inset 0 0 10px rgba(245, 208, 0, 0.1); }
+  50%       { box-shadow: 0 0 30px rgba(245, 208, 0, 0.85), inset 0 0 18px rgba(245, 208, 0, 0.25); }
+}
+
+.rsdw-icon {
+  font-size: 32px;
+  line-height: 1;
+  animation: rsdwBounce 1s ease-in-out infinite;
+}
+
+@keyframes rsdwBounce {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50%       { transform: translateY(-5px) rotate(8deg); }
+}
+
+.rsdw-text {
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  color: var(--neon-yellow);
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 8px var(--neon-yellow), 0 0 18px rgba(245, 208, 0, 0.55);
+  text-align: center;
+}
+
+.rsdw-text strong {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+.rsdw-sub {
+  font-family: var(--font-cjk);
+  font-size: 14px;
+  color: rgba(245, 208, 0, 0.75);
+  letter-spacing: 0.04em;
+}
+
+/* Topbar notice: upcoming style (more urgent) */
+.battle-skill-draw-notice[data-upcoming="1"] {
+  background: rgba(245, 208, 0, 0.14);
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 18px rgba(245, 208, 0, 0.45);
+  animation: skillDrawWarnPulse 1s ease-in-out infinite;
+}
+
+.battle-skill-draw-notice[data-upcoming="1"] .battle-skill-draw-text {
+  color: var(--neon-yellow);
+  text-shadow: 0 0 8px rgba(245, 208, 0, 0.6);
+  font-size: 16px;
+}
+
 /* Continue prompt */
 .report-continue {
   display: flex;

@@ -92,10 +92,6 @@
         <div class="panel battle-stage">
           <div class="battle-status-row">
             <div class="battle-round" id="battleRound"></div>
-            <div class="battle-skill-draw-notice" id="battleSkillDraw" style="display:none">
-              <span class="battle-skill-draw-icon">🃏</span>
-              <span class="battle-skill-draw-text">雙方各多抽一張技能卡！</span>
-            </div>
           </div>
           <div class="battle-main-area">
             <div class="battle-prompt" id="battlePrompt"></div>
@@ -554,7 +550,17 @@
 
       let summary = `<div class="report-summary">${summaryParts.join('')}</div>`;
 
-      // 5. Continue prompt (only on between-round result, not match over, not pending matchWinner)
+      // 5. Upcoming skill draw warning
+      let skillDrawWarning = '';
+      if (!isOver && !r.matchWinner && snap.upcomingSkillDrawRound) {
+        skillDrawWarning = `<div class="report-skill-draw-warning">
+          <span class="rsdw-icon">🃏</span>
+          <span class="rsdw-text">下一回合雙方各多抽一張<strong>技能卡</strong>！</span>
+          <span class="rsdw-sub">請先抽牌再繼續</span>
+        </div>`;
+      }
+
+      // 6. Continue prompt (only on between-round result, not match over, not pending matchWinner)
       let continuePrompt = '';
       if (!isOver && !r.matchWinner) {
         continuePrompt = `<div class="report-continue">
@@ -563,7 +569,7 @@
     </div>`;
       }
 
-      return `<div class="report-panel ${isOver ? 'report-panel-over' : ''}">${banner}${clash}${skills}${summary}${continuePrompt}</div>`;
+      return `<div class="report-panel ${isOver ? 'report-panel-over' : ''}">${banner}${clash}${skills}${summary}${skillDrawWarning}${continuePrompt}</div>`;
     }
 
     // 輔助函式：觸發攻擊特效
@@ -615,9 +621,7 @@
       const rd = $('battleRound');
       const rs = $('battleResult');
       const bStart = $('battleStartBtn');
-      const sdNotice = $('battleSkillDraw');
       const duel = document.querySelector('.battle-duel');
-      if (sdNotice) sdNotice.style.display = snap.skillDrawRound ? '' : 'none';
 
       const isResultPhase = snap.phase === 'show_result' || snap.phase === 'match_over';
       if (duel) {

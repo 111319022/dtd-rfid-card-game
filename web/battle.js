@@ -121,6 +121,14 @@ export function createBattleController({ onUpdate, onToast }) {
     return phase === Phase.TURN_P1 || phase === Phase.TURN_P2;
   }
 
+  function isUpcomingSkillDrawRound() {
+    if (phase !== Phase.SHOW_RESULT) return false;
+    if (lastResult?.matchWinner) return false;
+    const next = round + 1;
+    if (next < 10) return false;
+    return (next - 10) % 3 === 0;
+  }
+
   function snapshot() {
     const reveal = rpsRevealMode(phase);
     const showMovesToUi = reveal === 'moves' || reveal === 'full';
@@ -131,6 +139,7 @@ export function createBattleController({ onUpdate, onToast }) {
       phase,
       round,
       skillDrawRound: isSkillDrawRound(),
+      upcomingSkillDrawRound: isUpcomingSkillDrawRound(),
       p1: p1Char
         ? {
             name: p1Char.name || 'P1',
