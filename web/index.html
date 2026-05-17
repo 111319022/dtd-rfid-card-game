@@ -10,9 +10,9 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400..700&family=VT323&family=DotGothic16&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="Character.css">
-  <link rel="stylesheet" href="AttackEffect.css">
+  <link rel="stylesheet" href="/web/CSS/style.css">
+  <link rel="stylesheet" href="/web/CSS/Character.css">
+  <link rel="stylesheet" href="/web/CSS/AttackEffect.css">
 </head>
 
 <body>
@@ -22,35 +22,39 @@
     <button class="hidden-settings-btn" onclick="switchView('settings')" title="設定">⚙</button>
     <button class="fullscreen-btn home-fullscreen-btn" onclick="toggleFullscreen()" title="全螢幕">⛶</button>
 
-    <div class="welcome-inner">
-      <div class="welcome-logo">▰▰▰</div>
-      <h1 class="welcome-title">
-        <span class="title-en">DTD</span>
-        <span class="title-cjk">大亂鬥</span>
-      </h1>
-      <p class="welcome-sub">&gt; INSERT CARD TO START &lt;</p>
-      <p class="welcome-sub-cjk">感應卡片開始遊戲</p>
+    <div class="pixel-room-bg" id="pixelRoomBg">
+      <div class="welcome-screen-area">
+        <div class="welcome-inner">
+          <div class="welcome-logo">▰▰▰</div>
+          <h1 class="welcome-title">
+            <span class="title-en">DTD</span>
+            <span class="title-cjk">大亂鬥</span>
+          </h1>
+          <p class="welcome-sub">&gt; INSERT CARD TO START &lt;</p>
+          <p class="welcome-sub-cjk">感應卡片開始遊戲</p>
 
-      <div class="welcome-prompts">
-        <div class="welcome-prompt-line">
-          <span class="welcome-prompt-icon">⚔️</span> <strong>啟動卡</strong> ：<span class="desc">感應後直接開始對戰</span>
-        </div>
-        <div class="welcome-prompt-line">
-          <span class="welcome-prompt-icon">⚙️</span> <strong>設定卡</strong> ：<span class="desc">感應後進入設定頁面</span>
-        </div>
-      </div>
+          <div class="welcome-prompts">
+            <div class="welcome-prompt-line">
+              <span class="welcome-prompt-icon">⚔️</span> <strong>啟動卡</strong> ：<span class="desc">直接開始對戰</span>
+            </div>
+            <div class="welcome-prompt-line">
+              <span class="welcome-prompt-icon">⚙️</span> <strong>設定卡</strong> ：<span class="desc">進入設定頁面</span>
+            </div>
+          </div>
 
-      <div class="welcome-conn">
-        <button id="connectBtn" class="conn-primary">
-          <span class="conn-icon">⚡</span>
-          <span class="conn-label">連接 ESP32</span>
-        </button>
-        <div class="conn-lower">
-          <button id="disconnectBtn" class="conn-secondary" disabled>中斷連線</button>
-          <span class="conn-status-badge">
-            <span class="dot" id="statusDot"></span>
-            <span id="statusText">未連接</span>
-          </span>
+          <div class="welcome-conn">
+            <button id="connectBtn" class="conn-primary">
+              <span class="conn-icon">⚡</span>
+              <span class="conn-label">連接 ESP32</span>
+            </button>
+            <div class="conn-lower">
+              <button id="disconnectBtn" class="conn-secondary" disabled>中斷連線</button>
+              <span class="conn-status-badge">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">未連接</span>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -691,7 +695,27 @@
       }
     }
 
+    // index.html 的 <script> 區塊內
 
+    function startGameWithTransition() {
+      const homeView = document.getElementById('view-home');
+      // 核心：也要抓到文字區塊
+      const screenArea = homeView.querySelector('.welcome-screen-area');
+      const battleView = document.getElementById('view-battle');
+
+      // 1. 同步加上 zooming Class
+      homeView.classList.add('zooming');
+      if (screenArea) screenArea.classList.add('zooming');
+
+      setTimeout(() => {
+        window.switchView('battle');
+        homeView.classList.remove('zooming');
+        if (screenArea) screenArea.classList.remove('zooming');
+
+        battle.enterArcade();
+        battle.startMatch();
+      }, 1200);
+    }
 
     const battle = createBattleController({
       onUpdate: renderBattleView,
@@ -1064,6 +1088,18 @@
               showRestartWarning();
               break;
             }
+
+            // --- 核心修改：從首頁進入對戰時觸發穿越轉場 ---
+            if (currentView === 'home') {
+              setStatus('遊戲進行中', 'connected');
+              startGameWithTransition(); // 呼叫轉場動畫
+            } else {
+              // 如果是從設定頁切回對戰，可以直接切換或決定是否也要動畫
+              window.switchView('battle');
+              battle.enterArcade();
+              battle.startMatch();
+            }
+            break;
             // 其他畫面 → 直接開始對戰
             setStatus('遊戲進行中', 'connected');
             window.switchView('battle');
