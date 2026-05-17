@@ -1322,7 +1322,7 @@ button.small {
 }
 
 .battle-side.battle-p1 {
-  border-color: rgba(177, 74, 255, 0.35);
+  border-color: rgba(95, 180, 255, 0.35);
 }
 
 .battle-side.battle-p2 {
@@ -1341,8 +1341,8 @@ button.small {
 }
 
 .battle-side.battle-p1::after {
-  background: linear-gradient(90deg, transparent, var(--neon-purple), transparent);
-  box-shadow: 0 0 12px var(--neon-purple);
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  box-shadow: 0 0 12px var(--neon-cyan);
 }
 
 .battle-side.battle-p2::after {
@@ -1372,9 +1372,9 @@ button.small {
   font-family: var(--font-pixel);
   font-size: 16px;
   letter-spacing: 0.16em;
-  color: var(--neon-purple);
+  color: var(--neon-cyan);
   margin-bottom: 10px;
-  text-shadow: 0 0 5px rgba(177, 74, 255, 0.4);
+  text-shadow: 0 0 5px rgba(95, 180, 255, 0.4);
 }
 
 .battle-p2 .battle-side-label {
@@ -1400,7 +1400,7 @@ button.small {
 }
 
 .battle-p1 .battle-portrait {
-  border-color: rgba(177, 74, 255, 0.4);
+  border-color: rgba(95, 180, 255, 0.4);
 }
 
 .battle-p2 .battle-portrait {
@@ -1411,10 +1411,10 @@ button.small {
   font-family: var(--font-pixel);
   font-size: 68px;
   font-weight: 800;
-  color: var(--neon-purple);
+  color: var(--neon-cyan);
   line-height: 1;
   user-select: none;
-  text-shadow: 0 0 8px var(--neon-purple), 0 0 16px rgba(177, 74, 255, 0.4);
+  text-shadow: 0 0 8px var(--neon-cyan), 0 0 16px rgba(95, 180, 255, 0.4);
 }
 
 .battle-p2 .battle-portrait-inner {
@@ -1462,7 +1462,7 @@ button.small {
 .hp-bar {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--neon-green), var(--neon-purple));
+  background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
   box-shadow: 0 0 6px var(--neon-green), 0 0 12px rgba(0, 255, 136, 0.35);
   transition: width 0.25s ease;
 }
