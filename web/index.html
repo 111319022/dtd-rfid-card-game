@@ -65,7 +65,7 @@
       <span class="brand-mini"><span class="brand-en">DTD</span> <span class="brand-cjk">大亂鬥</span></span>
       <span class="spacer"></span>
       <span class="status"><span class="dot" id="statusDotBattle"></span><span id="statusTextBattle">未連接</span></span>
-      <button class="fullscreen-btn topbar-fullscreen-btn" id="testPanelBtn" onclick="toggleTestPanel()" title="手動測試輸入">⚒</button>
+      <button class="fullscreen-btn topbar-fullscreen-btn topbar-test-btn" id="testPanelBtn" onclick="toggleTestPanel()" title="手動測試輸入">測試</button>
       <button class="fullscreen-btn topbar-fullscreen-btn" onclick="toggleFullscreen()" title="全螢幕">⛶</button>
     </div>
     <div class="battle-duel">
@@ -1505,7 +1505,7 @@
   <div id="testPanelOverlay" class="tp-overlay" style="display:none" onclick="handleTestOverlayClick(event)">
     <div class="tp-modal">
       <div class="tp-header">
-        <span class="tp-title">⚒ 手動測試輸入</span>
+        <span class="tp-title">手動測試輸入</span>
         <button class="tp-close" onclick="closeTestPanel()">✕</button>
       </div>
       <div class="tp-cols">
