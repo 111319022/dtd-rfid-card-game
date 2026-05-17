@@ -302,10 +302,7 @@
     </div>
   </div>
 
-  <audio id="bgm" src="audio/homepage.ogg" loop preload="auto" muted></audio>
-  <audio id="battleBgm" src="audio/battle.ogg" loop preload="auto" muted></audio>
-  <audio id="gameoverBgm" src="audio/battle.ogg" loop preload="auto" muted></audio>
-  <button id="bgmToggleBtn" class="bgm-toggle-btn" title="音效開關">🔇</button>
+  <button id="bgmToggleBtn" class="bgm-toggle-btn" title="音效開關">🔊</button>
 
   <script type="module">
     import { SerialConnection, escapeHtml, badgeFor, statsHtml } from './serial.js';
@@ -315,52 +312,81 @@
     let currentView = 'home';
     let currentSettingsTab = 'uid';
 
-    // ============== BGM ==============
-    const bgm = $('bgm');
-    const battleBgm = $('battleBgm');
-    const gameoverBgm = $('gameoverBgm');
+    // ============== BGM (Web Audio API — 零間隔循環) ==============
+    const audioCtx = new AudioContext();
+    const masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1;
+    masterGain.connect(audioCtx.destination);
+
     const bgmBtn = $('bgmToggleBtn');
+    const audioBuffers = {};
+    let activeSource = null;
     let isMuted = false;
+    let pendingTrack = 'home';
     let lastBattlePhase = null;
 
-    function bgmPlay()         { bgm?.play().catch(() => {}); }
-    function bgmPause()        { bgm?.pause(); }
-    function battleBgmPlay()   { battleBgm?.play().catch(() => {}); }
-    function battleBgmPause()  { battleBgm?.pause(); }
-    function gameoverBgmPlay() { gameoverBgm?.play().catch(() => {}); }
-    function gameoverBgmPause(){ gameoverBgm?.pause(); }
+    async function loadAudio(key, url) {
+      try {
+        const res = await fetch(url);
+        const arr = await res.arrayBuffer();
+        audioBuffers[key] = await audioCtx.decodeAudioData(arr);
+        // 若 context 已啟動且此 track 正在等待播放，立即開始
+        if (key === pendingTrack && audioCtx.state === 'running' && !activeSource) {
+          playTrack(key);
+        }
+      } catch {}
+    }
+
+    loadAudio('home', 'audio/homepage.ogg');
+    loadAudio('battle', 'audio/battle.ogg');
+    loadAudio('gameover', 'audio/battle.ogg');
+
+    function playTrack(key) {
+      stopTrack();
+      const buf = audioBuffers[key];
+      if (!buf) return;
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      src.connect(masterGain);
+      src.start(0);
+      activeSource = src;
+    }
+
+    function stopTrack() {
+      if (!activeSource) return;
+      try { activeSource.stop(0); } catch {}
+      activeSource.disconnect();
+      activeSource = null;
+    }
 
     function setMuted(muted) {
       isMuted = muted;
-      if (bgm) bgm.muted = muted;
-      if (battleBgm) battleBgm.muted = muted;
-      if (gameoverBgm) gameoverBgm.muted = muted;
+      masterGain.gain.setValueAtTime(muted ? 0 : 1, audioCtx.currentTime);
       if (bgmBtn) bgmBtn.textContent = muted ? '🔇' : '🔊';
     }
 
+    // 第一次點擊任何地方時啟動 AudioContext
+    document.addEventListener('click', () => {
+      if (audioCtx.state !== 'suspended') return;
+      audioCtx.resume().then(() => {
+        if (!activeSource) playTrack(pendingTrack);
+      });
+    });
+
     bgmBtn?.addEventListener('click', () => {
-      setMuted(!isMuted);
-      if (!isMuted) {
-        if (currentView === 'battle') {
-          if (lastBattlePhase === 'match_over') gameoverBgmPlay();
-          else battleBgmPlay();
-        } else {
-          bgmPlay();
-        }
+      if (audioCtx.state === 'running') {
+        setMuted(!isMuted);
+        if (!isMuted && !activeSource) playTrack(pendingTrack);
       }
     });
 
-    // 靜音自動播放（瀏覽器不擋），第一次點擊任何地方時取消靜音
-    bgmPlay();
-    document.addEventListener('click', () => {
-      setMuted(false);
-      if (currentView === 'battle') {
-        if (lastBattlePhase === 'match_over') gameoverBgmPlay();
-        else battleBgmPlay();
-      } else {
-        bgmPlay();
-      }
-    }, { once: true });
+    function bgmPlay()         { pendingTrack = 'home';     if (audioCtx.state === 'running') playTrack('home'); }
+    function bgmPause()        { stopTrack(); }
+    function battleBgmPlay()   { pendingTrack = 'battle';   if (audioCtx.state === 'running') playTrack('battle'); }
+    function battleBgmPause()  { stopTrack(); }
+    function gameoverBgmPlay() { pendingTrack = 'gameover'; if (audioCtx.state === 'running') playTrack('gameover'); }
+    function gameoverBgmPause(){ stopTrack(); }
 
     let battleToastTimer = null;
     function battleToast(msg) {

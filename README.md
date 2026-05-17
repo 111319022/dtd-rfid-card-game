@@ -18,7 +18,7 @@
 ### 視覺體感與工業設計
 | 成員 | 分工 |  |
 | :--- | :--- | :--- |
-| **鍾尚哲 (Cucu)** | **產品結構工業設計、音效處理**<br>實體外殼木工建模與製造、產品組裝整合、外觀質感規劃、音效處理 | `Industrial Design` `Fabrication` |
+| **[鍾尚哲（Cucu）](https://github.com/Cucuuuccu)** | **產品結構工業設計、音效處理**<br>實體外殼木工建模與製造、產品組裝整合、外觀質感規劃、音效處理 | `Industrial Design` `Fabrication` |
 | **宋懿宸** | **視覺美術**<br>卡片原畫設計、角色視覺設定 | `Illustration` `Game Art` |
 
 ---
