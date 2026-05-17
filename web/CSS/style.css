@@ -2055,6 +2055,7 @@ button.small {
   color: var(--neon-purple);
   letter-spacing: 0.03em;
   text-shadow: 0 0 6px rgba(177, 74, 255, 0.4);
+  animation: blinkSlow 1.2s steps(2, end) infinite;
 }
 
 .report-continue-text strong {
