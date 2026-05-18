@@ -820,23 +820,31 @@
         else if (snap.round > 0) rd.textContent = `第 ${snap.round} 回合`;
         else rd.textContent = '';
       }
-      // --- 補回並修正後的戰報顯示邏輯 ---
+      // --- 先觸發攻擊動畫，再決定戰報是否顯示 ---
+      // 必須在 rs.innerHTML 檢查之前呼叫，讓 isFxPlaying 在下方判斷時已為 true
+      if (snap.phase === 'show_result' && snap.lastResult && snap.lastResult.winner !== 'tie') {
+        const winningMove = snap.lastResult.winner === 'p1'
+          ? snap.lastResult.p1Move
+          : snap.lastResult.p2Move;
+        if (window.triggerAttackFx) {
+          window.triggerAttackFx(winningMove, snap.lastResult.winner, snap);
+        }
+      }
+
+      // --- 戰報顯示邏輯 ---
       if (rs) {
         if (snap.phase === 'rps_pending_reveal') {
           rs.innerHTML = '<div class="battle-reveal-hint">待揭曉…</div>';
         } else if (snap.phase === 'rps_revealed') {
           rs.innerHTML = '<div class="battle-reveal-hint">即將公佈勝負…</div>';
         } else if (isResultPhase && snap.lastResult) {
-
           const isTie = snap.lastResult.winner === 'tie';
           const isFxPlaying = document.getElementById('attack-fx-layer').classList.contains('fx-playing');
-
-          // 核心修正：如果是平手，或是攻擊動畫播完了，就顯示戰報(卷軸)
+          // 平手：直接顯示戰報；動畫播完（或 match_over）：顯示戰報
+          // 動畫播放中：不覆蓋，等動畫結束後的回調填入
           if (isTie || !isFxPlaying) {
             rs.innerHTML = buildResultReport(snap);
           }
-          // 如果正在播攻擊動畫，就維持「即將公佈」不變，等動畫結束後的回調來填入
-
         } else {
           // 回到非結算階段（新回合開始）時，清空戰報區
           rs.innerHTML = '';
@@ -944,18 +952,6 @@
       setP('P2', p2);
 
       // --- 觸發出拳攻擊動畫邏輯 ---
-      // renderBattleView 內部的呼叫
-      if (snap.phase === 'show_result' && snap.lastResult && snap.lastResult.winner !== 'tie') {
-        const winningMove = snap.lastResult.winner === 'p1'
-          ? snap.lastResult.p1Move
-          : snap.lastResult.p2Move;
-
-        // 傳入贏家是誰以及當前的快照資料
-        if (window.triggerAttackFx) {
-          window.triggerAttackFx(winningMove, snap.lastResult.winner, snap);
-        }
-      }
-
       // 在 renderBattleView 函式快結束的地方
       const rps1 = $('battleRpsP1');
       const rps2 = $('battleRpsP2');
