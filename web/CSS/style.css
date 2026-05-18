@@ -299,7 +299,8 @@ button.warn:hover:not(:disabled) {
    ============================================================ */
 /* 修改這段 */
 #view-home.welcome-view {
-  max-width: none !important; /* 關鍵：移除 1440px 的限制 */
+  max-width: none !important;
+  /* 關鍵：移除 1440px 的限制 */
   width: 100vw;
   height: 100vh;
   padding: 0 !important;
@@ -314,13 +315,15 @@ button.warn:hover:not(:disabled) {
 
 .welcome-inner {
   width: 100%;
-  max-width: 900px; /* 限制內容最大寬度，避免標題太散 */
+  max-width: 900px;
+  /* 限制內容最大寬度，避免標題太散 */
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
   text-align: center;
-  transform: none !important; /* 移除任何縮放與偏移 */
+  transform: none !important;
+  /* 移除任何縮放與偏移 */
 }
 
 .welcome-logo {
@@ -365,31 +368,34 @@ button.warn:hover:not(:disabled) {
 
 .welcome-title .title-en {
   font-family: var(--font-pixel);
-  font-size: 72px; color: var(--neon-purple);
+  font-size: 72px;
+  color: var(--neon-purple);
   text-shadow:
     /* 深色底讓字體邊緣銳利 */
-    0 3px 6px rgba(0,0,0,0.95),
-    1px 1px 0 rgba(0,0,0,0.9),
+    0 3px 6px rgba(0, 0, 0, 0.95),
+    1px 1px 0 rgba(0, 0, 0, 0.9),
     /* 緊貼的霓虹光暈 */
-    0 0 5px rgba(177,74,255,1),
-    0 0 10px rgba(177,74,255,0.8),
+    0 0 5px rgba(177, 74, 255, 1),
+    0 0 10px rgba(177, 74, 255, 0.8),
     /* 3D offset */
     6px 6px 0 var(--neon-magenta),
     /* 遠端柔光 — 大幅減弱 */
-    0 0 28px rgba(177,74,255,0.3);
+    0 0 28px rgba(177, 74, 255, 0.3);
   letter-spacing: 8px;
 }
 
 .welcome-title .title-cjk {
   font-family: var(--font-cjk);
-  font-size: 68px; font-weight: 900; color: var(--neon-magenta);
+  font-size: 68px;
+  font-weight: 900;
+  color: var(--neon-magenta);
   text-shadow:
-    0 3px 6px rgba(0,0,0,0.95),
-    1px 1px 0 rgba(0,0,0,0.9),
-    0 0 5px rgba(255,45,146,1),
-    0 0 10px rgba(255,45,146,0.8),
+    0 3px 6px rgba(0, 0, 0, 0.95),
+    1px 1px 0 rgba(0, 0, 0, 0.9),
+    0 0 5px rgba(255, 45, 146, 1),
+    0 0 10px rgba(255, 45, 146, 0.8),
     4px 4px 0 var(--neon-purple),
-    0 0 28px rgba(255,45,146,0.3);
+    0 0 28px rgba(255, 45, 146, 0.3);
   letter-spacing: 10px;
 }
 
@@ -460,8 +466,8 @@ button.warn:hover:not(:disabled) {
 }
 
 .welcome-conn {
-    background: rgba(6, 6, 14, 0.7) !important;
-    backdrop-filter: blur(4px);
+  background: rgba(6, 6, 14, 0.7) !important;
+  backdrop-filter: blur(4px);
 }
 
 /*轉場動畫*/
@@ -473,30 +479,36 @@ button.warn:hover:not(:disabled) {
   width: 100vw;
   height: 100vh;
   background: #000 url('../IMG/場景圖/首頁背景圖.gif') center center no-repeat;
-  background-size: 100% 100% !important; /* 強制填滿 16:9 */
+  background-size: 100% 100% !important;
+  /* 強制填滿 16:9 */
   image-rendering: pixelated;
   z-index: 1;
-  pointer-events: none; /* 讓點擊穿透到按鈕 */
+  pointer-events: none;
+  /* 讓點擊穿透到按鈕 */
   transition: transform 1.5s cubic-bezier(0.7, 0, 0.3, 1), opacity 1s !important;
 }
 
 /* 對準電腦螢幕的容器 */
 .welcome-screen-area {
-  position: absolute; /* 使用絕對定位確保脫離背景層干擾 */
+  position: absolute;
+  /* 使用絕對定位確保脫離背景層干擾 */
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
   z-index: 10;
-  
+
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important;    /* 水平置中 */
-  justify-content: center !important; /* 垂直置中 */
-  
+  align-items: center !important;
+  /* 水平置中 */
+  justify-content: center !important;
+  /* 垂直置中 */
+
   margin: 0 !important;
   padding: 0 !important;
-  pointer-events: auto;transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.8s !important;
+  pointer-events: auto;
+  transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.8s !important;
 }
 
 /* 穿越動畫啟動 */
@@ -507,9 +519,12 @@ button.warn:hover:not(:disabled) {
 }
 
 .welcome-screen-area.zooming {
-  transform: scale(5) !important; /* 讓文字向鏡頭衝過來放大 5 倍 */
-  opacity: 0 !important;         /* 同時變透明 */
-  pointer-events: none;          /* 動畫期間禁止點擊 */
+  transform: scale(5) !important;
+  /* 讓文字向鏡頭衝過來放大 5 倍 */
+  opacity: 0 !important;
+  /* 同時變透明 */
+  pointer-events: none;
+  /* 動畫期間禁止點擊 */
 }
 
 /* Primary connect button */
@@ -653,16 +668,17 @@ button.warn:hover:not(:disabled) {
   background: var(--neon-red, #ff4b6e);
   border-color: var(--neon-red, #ff4b6e);
   box-shadow:
-    0 0 0 1px rgba(0,0,0,0.4) inset,
-    0 4px 0 rgba(160,0,40,0.8),
-    0 0 18px rgba(255,75,110,0.5);
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
+    0 4px 0 rgba(160, 0, 40, 0.8),
+    0 0 18px rgba(255, 75, 110, 0.5);
 }
+
 .conn-primary--disconnect:hover:not(:disabled) {
   box-shadow:
-    0 0 0 1px rgba(0,0,0,0.4) inset,
-    0 5px 0 rgba(160,0,40,0.8),
-    0 0 28px rgba(255,75,110,0.75),
-    0 0 56px rgba(255,75,110,0.25);
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
+    0 5px 0 rgba(160, 0, 40, 0.8),
+    0 0 28px rgba(255, 75, 110, 0.75),
+    0 0 56px rgba(255, 75, 110, 0.25);
 }
 
 .hidden-settings-btn {
@@ -1683,6 +1699,68 @@ button.small {
   flex-shrink: 0;
 }
 
+/*猜拳動畫*/
+/* --- 17 幀猜拳擺動動畫 --- */
+/* --- 17 幀猜拳擺動動畫 精確修正 --- */
+@keyframes rps-shake-17 {
+  from {
+    background-position: 0px 0;
+  }
+
+  /* 這裡必須是 -(單幀寬度 180px * 幀數 17) */
+  to {
+    background-position: -3060px 0;
+  }
+}
+
+.rps-window {
+  width: 180px;
+  /* 顯示的大小 */
+  height: 180px;
+  margin: 0 auto;
+  image-rendering: pixelated;
+  /* 保持像素風格 */
+  background-repeat: no-repeat;
+  /* 這裡也要配合：單幀 180px * 17幀 = 3060px */
+  background-size: 3060px 180px !important;
+}
+
+.battle-p2 .rps-window {
+  transform: scaleX(-1);
+  /* 左右翻轉 */
+  image-rendering: pixelated;
+  /* 確保翻轉後依然像素銳利 */
+}
+
+/* 狀態：擺動中 */
+.rps-state-ready {
+  background-image: url('/web/IMG/出拳/出拳擺動.png');
+  /* 使用 17 步，時間 0.8s 讓動作流暢 */
+  animation: rps-shake-17 1s steps(17) infinite;
+}
+
+/* 注意：steps() 裡面通常填 (總幀數 - 1)，如果動畫最後一幀跟第一幀不同 */
+/* 如果播起來會跳格，請嘗試 steps(17) 配合 to { background-position: -4352px 0; } */
+
+/* 狀態：結果定格 (PNG) */
+.rps-state-rock {
+  background-image: url('/web/IMG/出拳/result-rock.png');
+  background-size: contain !important;
+  animation: none;
+}
+
+.rps-state-scissors {
+  background-image: url('/web/IMG/出拳/result-scissors.png');
+  background-size: contain !important;
+  animation: none;
+}
+
+.rps-state-paper {
+  background-image: url('/web/IMG/出拳/result-paper.png');
+  background-size: contain !important;
+  animation: none;
+}
+
 .rps-node {
   position: relative;
   width: 60px;
@@ -2075,8 +2153,15 @@ button.small {
 }
 
 @keyframes skillDrawWarnPulse {
-  0%, 100% { box-shadow: 0 0 14px rgba(245, 208, 0, 0.4), inset 0 0 10px rgba(245, 208, 0, 0.1); }
-  50%       { box-shadow: 0 0 30px rgba(245, 208, 0, 0.85), inset 0 0 18px rgba(245, 208, 0, 0.25); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 14px rgba(245, 208, 0, 0.4), inset 0 0 10px rgba(245, 208, 0, 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(245, 208, 0, 0.85), inset 0 0 18px rgba(245, 208, 0, 0.25);
+  }
 }
 
 .rsdw-icon {
@@ -2086,8 +2171,15 @@ button.small {
 }
 
 @keyframes rsdwBounce {
-  0%, 100% { transform: translateY(0) rotate(-8deg); }
-  50%       { transform: translateY(-5px) rotate(8deg); }
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-8deg);
+  }
+
+  50% {
+    transform: translateY(-5px) rotate(8deg);
+  }
 }
 
 .rsdw-text {
@@ -2301,8 +2393,15 @@ button.small {
 }
 
 @keyframes goFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .go-headline {
@@ -2332,7 +2431,7 @@ button.small {
   grid-template-columns: minmax(220px, 1fr) minmax(360px, 1.4fr) minmax(220px, 1fr);
   align-items: center;
   gap: 18px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.15));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15));
   border-radius: 6px;
   padding: 14px 14px;
   border: 1.5px solid rgba(245, 208, 0, 0.35);
@@ -2392,10 +2491,13 @@ button.small {
 }
 
 @keyframes goBadgeWinPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     box-shadow: 0 0 14px rgba(245, 208, 0, 0.45), inset 0 0 10px rgba(245, 208, 0, 0.2);
   }
+
   50% {
     transform: scale(1.06);
     box-shadow: 0 0 26px rgba(245, 208, 0, 0.85), inset 0 0 14px rgba(245, 208, 0, 0.4);
@@ -2417,8 +2519,13 @@ button.small {
   overflow: hidden;
 }
 
-.go-side-1p .go-portrait-frame { border-color: rgba(95, 180, 255, 0.55); }
-.go-side-2p .go-portrait-frame { border-color: rgba(255, 45, 146, 0.55); }
+.go-side-1p .go-portrait-frame {
+  border-color: rgba(95, 180, 255, 0.55);
+}
+
+.go-side-2p .go-portrait-frame {
+  border-color: rgba(255, 45, 146, 0.55);
+}
 
 /* 2P portrait mirrored to face left */
 .go-side-2p .battle-portrait-inner {
@@ -2441,8 +2548,15 @@ button.small {
 }
 
 @keyframes goWinGlow {
-  0%, 100% { box-shadow: 0 0 28px rgba(245, 208, 0, 0.5), 0 0 50px rgba(245, 208, 0, 0.3), inset 0 0 22px rgba(245, 208, 0, 0.18); }
-  50%      { box-shadow: 0 0 42px rgba(245, 208, 0, 0.85), 0 0 80px rgba(245, 208, 0, 0.5), inset 0 0 28px rgba(245, 208, 0, 0.28); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 28px rgba(245, 208, 0, 0.5), 0 0 50px rgba(245, 208, 0, 0.3), inset 0 0 22px rgba(245, 208, 0, 0.18);
+  }
+
+  50% {
+    box-shadow: 0 0 42px rgba(245, 208, 0, 0.85), 0 0 80px rgba(245, 208, 0, 0.5), inset 0 0 28px rgba(245, 208, 0, 0.28);
+  }
 }
 
 .go-portrait-fallback {
@@ -2463,8 +2577,13 @@ button.small {
   margin-top: 4px;
 }
 
-.go-side-1p .go-side-tag { color: var(--neon-cyan); }
-.go-side-2p .go-side-tag { color: var(--neon-magenta); }
+.go-side-1p .go-side-tag {
+  color: var(--neon-cyan);
+}
+
+.go-side-2p .go-side-tag {
+  color: var(--neon-magenta);
+}
 
 .go-name {
   font-family: var(--font-cjk);
@@ -2529,9 +2648,19 @@ button.small {
   border-bottom: 1px solid rgba(177, 74, 255, 0.35);
 }
 
-.go-stats-table thead th:first-child { color: var(--neon-cyan); text-align: right; }
-.go-stats-table thead th:last-child  { color: var(--neon-magenta); text-align: left; }
-.go-stats-table thead th:nth-child(2) { width: 38%; }
+.go-stats-table thead th:first-child {
+  color: var(--neon-cyan);
+  text-align: right;
+}
+
+.go-stats-table thead th:last-child {
+  color: var(--neon-magenta);
+  text-align: left;
+}
+
+.go-stats-table thead th:nth-child(2) {
+  width: 38%;
+}
 
 .go-stats-table tbody td {
   padding: 8px 8px;
@@ -2559,8 +2688,15 @@ button.small {
   width: 31%;
 }
 
-.go-stats-table tbody td.go-stat-val:first-child { text-align: right; padding-right: 18px; }
-.go-stats-table tbody td.go-stat-val:last-child  { text-align: left;  padding-left:  18px; }
+.go-stats-table tbody td.go-stat-val:first-child {
+  text-align: right;
+  padding-right: 18px;
+}
+
+.go-stats-table tbody td.go-stat-val:last-child {
+  text-align: left;
+  padding-left: 18px;
+}
 
 .go-stat-val.hi {
   color: var(--neon-yellow);
@@ -2678,6 +2814,7 @@ button.small {
   font-family: var(--font-cjk);
   color: #ffffff;
 }
+
 /* ================== TEST PANEL ================== */
 .tp-overlay {
   position: fixed;
@@ -2733,6 +2870,7 @@ button.small {
   padding: 0;
   box-shadow: none;
 }
+
 .tp-close:hover {
   color: var(--neon-red);
   border-color: var(--neon-red);
@@ -2768,8 +2906,14 @@ button.small {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border-dim);
 }
-.tp-p1 { color: var(--neon-cyan); }
-.tp-p2 { color: var(--neon-magenta); }
+
+.tp-p1 {
+  color: var(--neon-cyan);
+}
+
+.tp-p2 {
+  color: var(--neon-magenta);
+}
 
 /* Phase status message */
 .tp-status {
@@ -2814,6 +2958,7 @@ button.small {
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
+
 .tp-field input:focus {
   outline: none;
   border-color: var(--neon-purple);
@@ -2852,11 +2997,13 @@ button.small {
   text-align: center;
   margin-top: 4px;
 }
+
 .tp-btn:hover {
   background: rgba(177, 74, 255, 0.25);
   transform: none;
   box-shadow: none;
 }
+
 .tp-btn.tp-btn-rps {
   font-size: 22px;
   padding: 10px 6px;
@@ -2864,12 +3011,14 @@ button.small {
   background: var(--panel2);
   color: var(--text);
 }
+
 .tp-btn.tp-btn-rps:hover {
   border-color: var(--neon-yellow);
   background: rgba(245, 208, 0, 0.1);
   transform: none;
   box-shadow: none;
 }
+
 .tp-btn.tp-btn-skip {
   font-size: 11px;
   border-color: var(--border-dim);
@@ -2877,6 +3026,7 @@ button.small {
   color: var(--muted);
   margin-top: 0;
 }
+
 .tp-btn.tp-btn-skip:hover {
   border-color: var(--muted);
   color: var(--text);

@@ -65,7 +65,8 @@
       <span class="brand-mini"><span class="brand-en">DTD</span> <span class="brand-cjk">大亂鬥</span></span>
       <span class="spacer"></span>
       <span class="status"><span class="dot" id="statusDotBattle"></span><span id="statusTextBattle">未連接</span></span>
-      <button class="fullscreen-btn topbar-fullscreen-btn topbar-test-btn" id="testPanelBtn" onclick="toggleTestPanel()" title="手動測試輸入">測試</button>
+      <button class="fullscreen-btn topbar-fullscreen-btn topbar-test-btn" id="testPanelBtn" onclick="toggleTestPanel()"
+        title="手動測試輸入">測試</button>
       <button class="fullscreen-btn topbar-fullscreen-btn" onclick="toggleFullscreen()" title="全螢幕">⛶</button>
     </div>
     <div class="battle-duel">
@@ -334,7 +335,7 @@
         if (key === pendingTrack && audioCtx.state === 'running' && !activeSource) {
           playTrack(key);
         }
-      } catch {}
+      } catch { }
     }
 
     loadAudio('home', 'audio/homepageV2.ogg');
@@ -355,7 +356,7 @@
 
     function stopTrack() {
       if (!activeSource) return;
-      try { activeSource.stop(0); } catch {}
+      try { activeSource.stop(0); } catch { }
       activeSource.disconnect();
       activeSource = null;
     }
@@ -381,12 +382,12 @@
       }
     });
 
-    function bgmPlay()         { pendingTrack = 'home';     if (audioCtx.state === 'running') playTrack('home'); }
-    function bgmPause()        { stopTrack(); }
-    function battleBgmPlay()   { pendingTrack = 'battle';   if (audioCtx.state === 'running') playTrack('battle'); }
-    function battleBgmPause()  { stopTrack(); }
+    function bgmPlay() { pendingTrack = 'home'; if (audioCtx.state === 'running') playTrack('home'); }
+    function bgmPause() { stopTrack(); }
+    function battleBgmPlay() { pendingTrack = 'battle'; if (audioCtx.state === 'running') playTrack('battle'); }
+    function battleBgmPause() { stopTrack(); }
     function gameoverBgmPlay() { pendingTrack = 'gameover'; if (audioCtx.state === 'running') playTrack('gameover'); }
-    function gameoverBgmPause(){ stopTrack(); }
+    function gameoverBgmPause() { stopTrack(); }
 
     let battleToastTimer = null;
     function battleToast(msg) {
@@ -411,17 +412,28 @@
 
     function updateRpsCluster(el, ownMove, reveal) {
       if (!el) return;
-      el.dataset.reveal = reveal;
-      el.querySelectorAll('.rps-node').forEach(n => {
-        n.classList.remove('is-selected', 'is-dim', 'is-pending');
-        const m = n.dataset.move;
-        if (reveal === 'moves' || reveal === 'full') {
-          if (ownMove && m === ownMove) n.classList.add('is-selected');
-          else n.classList.add('is-dim');
-        } else if (reveal === 'hidden') {
-          n.classList.add('is-pending');
+
+      // 1. 雙方已出拳，揭曉中 -> 跑 17 幀擺動
+      if (reveal === 'hidden') {
+        el.innerHTML = `<div class="rps-window rps-state-ready"></div>`;
+        return;
+      }
+
+      // 2. 揭曉結果 -> 顯示 PNG
+      if (reveal === 'moves' || reveal === 'full') {
+        if (ownMove) {
+          // 這裡會自動套用 .rps-state-rock 等樣式
+          el.innerHTML = `<div class="rps-window rps-state-${ownMove}"></div>`;
         }
-      });
+        return;
+      }
+
+      // 3. 初始狀態 (顯示原本的 Emoji 節點)
+      el.innerHTML = `
+    <div class="rps-node rps-rock is-pending" data-move="rock"><span class="rps-glyph">✊</span></div>
+    <div class="rps-node rps-scissors is-pending" data-move="scissors"><span class="rps-glyph">✌️</span></div>
+    <div class="rps-node rps-paper is-pending" data-move="paper"><span class="rps-glyph">✋</span></div>
+  `;
     }
 
     function formatSkillHidden() {
@@ -765,7 +777,7 @@
       const p2 = snap.p2;
       const reveal = snap.rpsReveal || 'none';
 
-      // --- 優化後的 setP 函式 ---
+      // --- 進階優化後的 setP 函式 ---
       const setP = (side, data) => {
         const nameEl = $(`battle${side}Name`);
         const hpEl = $(`battle${side}Hp`);
@@ -775,9 +787,10 @@
 
         if (!nameEl || !hpEl || !barEl || !portraitEl) return;
 
-        // 1. 初始化容器：清除文字並套用基礎動畫 Class
+        // 1. 初始化容器：清除文字並重設 Class
         portraitEl.textContent = '';
-        portraitEl.className = 'battle-portrait-inner';
+        // 這裡確保基礎 Class 存在，且如果是 P2 就加上鏡像判斷的父層 Class
+        portraitEl.className = `battle-portrait-inner ${side === 'P2' ? 'battle-p2' : ''}`;
 
         if (!data) {
           nameEl.textContent = '—';
@@ -788,28 +801,30 @@
           return;
         }
 
-        // 2. 角色與 CSS Class 映射表 (易於維護)
+        // 2. 角色映射表 (Class 名稱請對應你的 Character.css)
         const characterMap = {
           "Ray": "char-ray",
           "大西": "char-daxi",
-          "Da Xi": "char-daxi"
+          "Da Xi": "char-daxi",
+          "壹柒零": "char-壹柒零"
         };
 
-        // 3. 匹配名稱並套用圖片
+        // 3. 匹配名稱並套用圖片 (使用 Object.entries 效能更好)
         let hasImage = false;
-        for (let nameKey in characterMap) {
-          if (data.name.includes(nameKey)) {
-            portraitEl.classList.add(characterMap[nameKey]);
+        Object.entries(characterMap).forEach(([key, className]) => {
+          if (data.name.includes(key)) {
+            portraitEl.classList.add(className);
             hasImage = true;
-            break;
           }
-        }
+        });
 
+        // 4. 如果沒匹配到圖片，顯示名字首字 (備案樣式)
         if (!hasImage) {
           portraitEl.textContent = (data.name || side).slice(0, 1);
+          portraitEl.classList.remove('battle-portrait-inner'); // 避免背景樣式干擾文字
         }
 
-        // 4. 更新其餘基本資訊
+        // 5. 更新基本資訊
         nameEl.textContent = data.name || side;
         hpEl.textContent = `${data.hp} / ${data.maxHp}`;
         const pct = data.maxHp > 0 ? Math.round((data.hp / data.maxHp) * 100) : 0;
@@ -839,25 +854,22 @@
         }
       }
 
+      // 在 renderBattleView 函式快結束的地方
       const rps1 = $('battleRpsP1');
       const rps2 = $('battleRpsP2');
-      if (rps1) updateRpsCluster(rps1, snap.p1Move, reveal);
-      if (rps2) updateRpsCluster(rps2, snap.p2Move, reveal);
 
-      // index.html 內的 renderBattleView 片段
-      if (rs) {
-        if (snap.phase === 'rps_pending_reveal') {
-          rs.innerHTML = '<div class="battle-reveal-hint">待揭曉…</div>';
-        } else if (snap.phase === 'rps_revealed') {
-          rs.innerHTML = '<div class="battle-reveal-hint">即將公佈勝負…</div>';
-        } else if (isResultPhase && snap.lastResult) {
-          // --- 修改處：如果是剛進入結果階段，先不清空畫面，等動畫播完再顯示戰報 ---
-          if (!document.getElementById('attack-fx-layer').classList.contains('fx-playing')) {
-            rs.innerHTML = buildResultReport(snap);
-          }
-        } else {
-          rs.innerHTML = '';
-        }
+      if (snap.phase === 'rps_pending_reveal') {
+        // 全力擺動 GIF
+        updateRpsCluster(rps1, snap.p1Move, 'hidden');
+        updateRpsCluster(rps2, snap.p2Move, 'hidden');
+      } else if (snap.phase === 'show_result' || snap.phase === 'rps_revealed') {
+        // 揭曉結果 PNG
+        updateRpsCluster(rps1, snap.p1Move, 'moves');
+        updateRpsCluster(rps2, snap.p2Move, 'moves');
+      } else {
+        // 平時狀態
+        updateRpsCluster(rps1, snap.p1Move, reveal);
+        updateRpsCluster(rps2, snap.p2Move, reveal);
       }
     }
 
@@ -1555,15 +1567,15 @@
       const el = $(isP1 ? 'tpContentP1' : 'tpContentP2');
 
       const phaseMap = {
-        lobby:               isP1 ? '尚未開始對戰' : '尚未開始對戰',
-        wait_p1_char:        isP1 ? 'char' : '等待 1P 設定角色…',
-        wait_p2_char:        isP1 ? 'P1 角色已設定 ✓' : 'char',
-        turn_p1:             isP1 ? 'turn' : '等待 1P 出牌…',
-        turn_p2:             isP1 ? '1P 已出牌 ✓' : 'turn',
-        rps_pending_reveal:  '結算中…',
-        rps_revealed:        '結算中…',
-        show_result:         isP1 ? 'advance' : 'advance',
-        match_over:          '對戰結束',
+        lobby: isP1 ? '尚未開始對戰' : '尚未開始對戰',
+        wait_p1_char: isP1 ? 'char' : '等待 1P 設定角色…',
+        wait_p2_char: isP1 ? 'P1 角色已設定 ✓' : 'char',
+        turn_p1: isP1 ? 'turn' : '等待 1P 出牌…',
+        turn_p2: isP1 ? '1P 已出牌 ✓' : 'turn',
+        rps_pending_reveal: '結算中…',
+        rps_revealed: '結算中…',
+        show_result: isP1 ? 'advance' : 'advance',
+        match_over: '對戰結束',
       };
 
       const state = phaseMap[ph] || '—';

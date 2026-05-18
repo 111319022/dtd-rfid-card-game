@@ -1,47 +1,60 @@
-/* ==========================================
-   Character.css — 像素角色動畫與視覺定義
-   ========================================== */
-
-/* 1. 定義通用的四幀循環動畫 */
-@keyframes idle-steps {
+/* 1. 動畫定義：全部統一用百分比 (%)，這樣就不用管 64 還是 256 了！ */
+@keyframes idle-steps-4 {
     from { background-position: 0px 0; }
-    to { background-position: -256px 0; } /* 4幀 x 64px = 256px */
+    /* 180px * 4幀 = 720px */
+    to { background-position: -720px 0; }
+}
+
+@keyframes idle-steps-8 {
+    from { background-position: 0px 0; }
+    /* 這裡必須是：-(單幀寬度 * 總幀數) */
+    to { background-position: -1440px 0; } 
 }
 
 /* 2. 角色容器基礎樣式 */
 .battle-portrait-inner {
-    width: 64px;                /* 單幀寬度 */
-    height: 64px;               /* 單幀高度 */
+    width: 180px;
+    height: 180px;
     display: block;
     margin: 0 auto;
-    image-rendering: pixelated;  /* 關鍵：保持像素銳利不模糊 */
-    background-size: 256px 64px; /* 背景圖總尺寸 */
+    image-rendering: pixelated;
+
+    /* 核心修正：統一使用 auto 100%，讓 CSS 自動幫你縮放圖片高度 */
+    background-size: auto 100% !important;
     background-repeat: no-repeat;
-    animation: idle-steps 0.8s steps(4) infinite; /* 使用 4 步達成跳動感 */
-    transform: scale(2.8);       /* 根據你的框框大小調整放大倍率 */
     background-position: 0 0;
-    font-size: 0;                /* 隱藏原本顯示的 "-" 文字 */
+
+    font-size: 0;
     color: transparent;
 }
 
-/* 3. 角色圖片對應 (Class 名稱需與 battle.js 判斷邏輯一致) */
+/* 3. 角色個別設定：只設定圖片路徑與對應的動畫步數 */
 
-/* Ray 角色 */
-.char-ray {
-    background-image: url('../IMG/角色卡/Ray/Ray四幀.png')
-}
-
-/* 大西 角色 */
+/* --- 4幀角色群 --- */
+.char-ray,
 .char-daxi {
-    background-image: url('../IMG/角色卡/大西/大西動畫四幀.png');
+    background-size: auto 100% !important;
+    animation: idle-steps-4 0.8s steps(4) infinite;
 }
 
-/* 4. 2P 角色鏡像處理：讓 2P 面向左邊與 1P 對陣 */
-.battle-p2 .battle-portrait-inner {
-    transform: scale(2.8) scaleX(-1);
+.char-ray {
+    background-image: url('/web/IMG/角色卡/Ray/Ray四幀.png');
 }
 
-/* 5. 戰鬥細節優化：移除原本框框內的文字陰影，讓像素更乾淨 */
-.battle-portrait-inner::after {
-    display: none;
+.char-daxi {
+    background-image: url('/web/IMG/角色卡/大西/大西動畫四幀.png');
+}
+
+/* --- 8幀角色群 --- */
+.char-壹柒零 {
+    background-image: url('/web/IMG/角色卡/170/170(spritesheet_256).png');
+    background-size: auto 100% !important;
+    /* 8 幀用 steps(8) 配合 8 幀的 Keyframes */
+    animation: idle-steps-8 1.2s steps(8) infinite;
+}
+
+/* 4. 2P 鏡像處理 */
+/* 修正：原本你的 JS 把 .battle-p2 加在 portraitEl 本身，所以這裡要連著寫 */
+.battle-portrait-inner.battle-p2 {
+    transform: scaleX(-1);
 }
