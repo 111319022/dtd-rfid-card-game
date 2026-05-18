@@ -330,16 +330,17 @@
         const res = await fetch(url);
         const arr = await res.arrayBuffer();
         audioBuffers[key] = await audioCtx.decodeAudioData(arr);
-        // 若 context 已啟動且此 track 正在等待播放，立即開始
-        if (key === pendingTrack && audioCtx.state === 'running' && !activeSource) {
-          playTrack(key);
+        if (audioCtx.state === 'running' && !activeSource) {
+          if (key === pendingTrack) playTrack(key);
+          else if (pendingTrack === 'gameover' && (key === 'fin1' || key === 'fin2')) gameoverBgmPlay();
         }
       } catch {}
     }
 
     loadAudio('home', 'audio/homepageV2.ogg');
     loadAudio('battle', 'audio/battle.ogg');
-    loadAudio('gameover', 'audio/battle.ogg');
+    loadAudio('fin1', 'audio/fin1.ogg');
+    loadAudio('fin2', 'audio/fin2.ogg');
 
     function playTrack(key) {
       stopTrack();
@@ -370,14 +371,20 @@
     document.addEventListener('click', () => {
       if (audioCtx.state !== 'suspended') return;
       audioCtx.resume().then(() => {
-        if (!activeSource) playTrack(pendingTrack);
+        if (!activeSource) {
+          if (pendingTrack === 'gameover') gameoverBgmPlay();
+          else playTrack(pendingTrack);
+        }
       });
     });
 
     bgmBtn?.addEventListener('click', () => {
       if (audioCtx.state === 'running') {
         setMuted(!isMuted);
-        if (!isMuted && !activeSource) playTrack(pendingTrack);
+        if (!isMuted && !activeSource) {
+          if (pendingTrack === 'gameover') gameoverBgmPlay();
+          else playTrack(pendingTrack);
+        }
       }
     });
 
@@ -385,8 +392,32 @@
     function bgmPause()        { stopTrack(); }
     function battleBgmPlay()   { pendingTrack = 'battle';   if (audioCtx.state === 'running') playTrack('battle'); }
     function battleBgmPause()  { stopTrack(); }
-    function gameoverBgmPlay() { pendingTrack = 'gameover'; if (audioCtx.state === 'running') playTrack('gameover'); }
     function gameoverBgmPause(){ stopTrack(); }
+
+    function gameoverBgmPlay() {
+      pendingTrack = 'gameover';
+      if (audioCtx.state !== 'running') return;
+      stopTrack();
+      const buf1 = audioBuffers['fin1'];
+      if (!buf1) return;
+      const src1 = audioCtx.createBufferSource();
+      src1.buffer = buf1;
+      src1.loop = false;
+      src1.connect(masterGain);
+      src1.onended = () => {
+        if (activeSource !== src1) return; // 被外部停止則不繼續
+        const buf2 = audioBuffers['fin2'];
+        if (!buf2) return;
+        const src2 = audioCtx.createBufferSource();
+        src2.buffer = buf2;
+        src2.loop = true;
+        src2.connect(masterGain);
+        src2.start(0);
+        activeSource = src2;
+      };
+      src1.start(0);
+      activeSource = src1;
+    }
 
     let battleToastTimer = null;
     function battleToast(msg) {
