@@ -565,7 +565,7 @@
 
     function characterClassFor(name) {
       if (!name) return '';
-      const map = { 'Ray': 'char-ray', '大西': 'char-daxi', 'Da Xi': 'char-daxi' };
+      const map = { 'Ray': 'char-ray', '大西': 'char-daxi', 'Da Xi': 'char-daxi', '壹柒零': 'char-壹柒零', '170': 'char-壹柒零' };
       for (const k in map) if (name.includes(k)) return map[k];
       return '';
     }
@@ -602,8 +602,8 @@
       const p2Max = snap.p2?.maxHp ?? 0;
 
       const headline = mw === 'tie'
-        ? '<div class="go-headline tie">💥 同歸於盡</div>'
-        : `<div class="go-headline">🏆 <strong>${escapeHtml(mw === 'p1' ? p1Name : p2Name)}</strong> 獲得最終勝利</div>`;
+        ? '<div class="go-headline tie"> 蹦！同歸於盡</div>'
+        : `<div class="go-headline">恭喜！ <strong>${escapeHtml(mw === 'p1' ? p1Name : p2Name)}</strong> 獲得最終勝利</div>`;
 
       const row = (label, v1, v2, fmt) => {
         const a = fmt ? fmt(v1) : v1;

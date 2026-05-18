@@ -2529,11 +2529,11 @@ button.small {
 
 /* 2P portrait mirrored to face left */
 .go-side-2p .battle-portrait-inner {
-  transform: scale(3) scaleX(-1);
+  transform: scaleX(-1);
 }
 
 .go-side-1p .battle-portrait-inner {
-  transform: scale(3);
+  transform: none;
 }
 
 /* Winner: keep portrait same size; emphasize via glowing frame only */
